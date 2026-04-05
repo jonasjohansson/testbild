@@ -10,6 +10,28 @@
       "h": 960,
       "cols": 11,
       "rows": 8,
+      "color": "#00ff00",
+      "crossUV": {
+        "minU": 0,
+        "maxU": 0.1595,
+        "minV": 0.2991,
+        "maxV": 0.7009
+      },
+      "rotation": 270,
+      "ushapeUV": {
+        "minU": 0.3778,
+        "maxU": 0.6222,
+        "minV": 0.5789,
+        "maxV": 1
+      },
+      "ushapeRotation": 0,
+      "ushapeCols": 11
+    },
+    "Wall_Rear": {
+      "w": 1320,
+      "h": 960,
+      "cols": 11,
+      "rows": 8,
       "color": "#ff0000",
       "crossUV": {
         "minU": 0.8405,
@@ -25,28 +47,6 @@
         "maxV": 1
       },
       "ushapeRotation": 0,
-      "ushapeCols": 11
-    },
-    "Wall_Rear": {
-      "w": 1320,
-      "h": 960,
-      "cols": 11,
-      "rows": 8,
-      "color": "#00ff00",
-      "crossUV": {
-        "minU": 0,
-        "maxU": 0.1595,
-        "minV": 0.2991,
-        "maxV": 0.7009
-      },
-      "rotation": 270,
-      "ushapeUV": {
-        "minU": 0.3778,
-        "maxU": 0.6222,
-        "minV": 0.5789,
-        "maxV": 1
-      },
-      "ushapeRotation": 180,
       "ushapeCols": 11,
       "ushapeMirrorOf": "Wall_Front"
     },

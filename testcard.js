@@ -218,18 +218,18 @@ gui.add({ exportPixelMap() {
   downloadCanvas(c, "pixel_map.png");
 }}, "exportPixelMap").name("Export Pixel Map");
 
-gui.add({ viewUShape() {
-  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No UShape layout. Upload a UV JSON first."); return; }
+gui.add({ viewPanorama() {
+  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No Panorama layout. Upload a UV JSON first."); return; }
   viewPixelMapMode = "ushape";
   render();
-}}, "viewUShape").name("View UShape");
+}}, "viewPanorama").name("View Panorama");
 
-gui.add({ exportUShape() {
-  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No UShape layout. Upload a UV JSON first."); return; }
+gui.add({ exportPanorama() {
+  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No Panorama layout. Upload a UV JSON first."); return; }
   const c = document.createElement("canvas");
   renderPixelMap(c, ushapeLayout);
-  downloadCanvas(c, "ushape_template.png");
-}}, "exportUShape").name("Export UShape");
+  downloadCanvas(c, "panorama_template.png");
+}}, "exportPanorama").name("Export Panorama");
 
 gui.add({ uploadUV() {
   const input = document.createElement("input");
