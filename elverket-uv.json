@@ -2,6 +2,8 @@
   "name": "elverket",
   "crossTextureWidth": 6004,
   "crossTextureHeight": 3201,
+  "ushapeTextureWidth": 4096,
+  "ushapeTextureHeight": 2048,
   "surfaces": {
     "Wall_Front": {
       "w": 1320,
@@ -11,7 +13,7 @@
       "color": "#ff0000",
       "crossUV": {
         "minU": 0.8405,
-        "maxU": 1.0,
+        "maxU": 1,
         "minV": 0.299,
         "maxV": 0.7009
       },
@@ -22,8 +24,7 @@
         "minV": 0.5,
         "maxV": 1
       },
-      "ushapeRotation": 0,
-      "ushapeCols": 11
+      "ushapeRotation": 0
     },
     "Wall_Rear": {
       "w": 1320,
@@ -44,8 +45,7 @@
         "minV": 0.5,
         "maxV": 1
       },
-      "ushapeRotation": 180,
-      "ushapeCols": 11
+      "ushapeRotation": 180
     },
     "Wall_Left": {
       "w": 4089,
@@ -59,7 +59,7 @@
         "minV": 0.0,
         "maxV": 0.2992
       },
-      "rotation": 0,
+      "rotation": 180,
       "ushapeUV": {
         "minU": 0.6222,
         "maxU": 1,
@@ -81,7 +81,7 @@
         "minV": 0.7008,
         "maxV": 1.0
       },
-      "rotation": 0,
+      "rotation": 180,
       "ushapeUV": {
         "minU": 0,
         "maxU": 0.3778,
@@ -110,10 +110,7 @@
         "minV": 0,
         "maxV": 0.5
       },
-      "ushapeRotation": 0,
-      "ushapeCols": 34
+      "ushapeRotation": 0
     }
-  },
-  "ushapeTextureWidth": 4096,
-  "ushapeTextureHeight": 2048
+  }
 }
