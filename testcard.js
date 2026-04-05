@@ -28,6 +28,7 @@ const global = {
   centerSize: 1.0,
   checkerOpacity: 0.08,
   circles: true,
+  cross: true,
   colorbar: false,
   invert: false,
   credits: "\u00A9 Jonas Johansson",
@@ -100,6 +101,7 @@ function renderToCanvas(c, s) {
 
   switch (p.pattern) {
     case "grid": drawGrid(ctx, p); break;
+    case "pm5544": drawPM5544(ctx, p); break;
     case "smpte": drawSMPTE(ctx, p); break;
   }
 }
@@ -111,7 +113,7 @@ function render() {
 }
 
 // ── Tweakpane ──
-const pane = new Pane({ title: "Testcard" });
+const pane = new Pane({ title: "Testbild" });
 
 // Preset
 pane.addBlade({
@@ -164,12 +166,13 @@ sf.addBinding(surface, "lineColor", { label: "Color" }).on("change", () => { sav
 
 // Global settings
 const gf = pane.addFolder({ title: "Global", expanded: true });
-gf.addBlade({ view: "list", label: "Pattern", options: [{ text: "Grid", value: "grid" }, { text: "SMPTE", value: "smpte" }], value: "grid" }).on("change", (ev) => { global.pattern = ev.value; render(); });
+gf.addBlade({ view: "list", label: "Pattern", options: [{ text: "Grid", value: "grid" }, { text: "PM5544", value: "pm5544" }, { text: "SMPTE", value: "smpte" }], value: "grid" }).on("change", (ev) => { global.pattern = ev.value; render(); });
 gf.addBinding(global, "lineWidth", { min: 0.5, max: 10, step: 0.5, label: "Line Width" }).on("change", render);
 gf.addBinding(global, "cellSize", { min: 0.3, max: 1.5, step: 0.05, label: "Cell Size" }).on("change", render);
 gf.addBinding(global, "centerSize", { min: 0.5, max: 3.0, step: 0.1, label: "Center Size" }).on("change", render);
 gf.addBinding(global, "checkerOpacity", { min: 0, max: 0.5, step: 0.01, label: "Checker" }).on("change", render);
 gf.addBinding(global, "circles", { label: "Circles" }).on("change", render);
+gf.addBinding(global, "cross", { label: "Cross" }).on("change", render);
 gf.addBinding(global, "colorbar", { label: "Color Bar" }).on("change", render);
 gf.addBinding(global, "invert", { label: "Invert" }).on("change", render);
 gf.addBinding(global, "credits", { label: "Credits" }).on("change", render);
@@ -195,15 +198,37 @@ pane.addButton({ title: "Export PNG" }).on("click", () => {
   downloadCanvas(c, `${surfaces[activeIdx].name.replace(/\s+/g, "_")}.png`);
 });
 
-pane.addButton({ title: "Export All PNGs" }).on("click", () => {
-  surfaces.forEach((s, i) => {
-    setTimeout(() => {
-      const c = document.createElement("canvas");
-      renderToCanvas(c, s);
-      downloadCanvas(c, `${s.name.replace(/\s+/g, "_")}.png`);
-    }, i * 300);
-  });
+pane.addButton({ title: "Export All as ZIP" }).on("click", () => {
+  exportZip().catch((e) => { console.error("ZIP failed:", e); alert("ZIP failed: " + e.message); });
 });
+
+async function exportZip() {
+  if (!window.JSZip) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("Failed to load JSZip"));
+      document.head.appendChild(s);
+    });
+  }
+  const zip = new JSZip();
+  for (const s of surfaces) {
+    const c = document.createElement("canvas");
+    renderToCanvas(c, s);
+    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+    zip.file(`${s.name.replace(/\s+/g, "_")}.png`, blob);
+  }
+  const content = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(content);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "testcards.zip";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // ── Drawing ──
 function drawGrid(ctx, p) {
@@ -247,17 +272,25 @@ function drawGrid(ctx, p) {
     for (let c = 0; c < cols; c++)
       ctx.fillText(`${c},${r}`, c * cellW + pad + lw, r * cellH + pad + lw);
 
-  // Circles
+  // Cross (corner-to-corner diagonals)
+  if (p.cross) {
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w, 0); ctx.lineTo(0, h); ctx.stroke();
+  }
+
+  // Circles (concentric only, no straight lines)
   if (circles) {
     const cx = w / 2, cy = h / 2;
-    const r = Math.min(w, h) * 0.4;
-    ctx.strokeStyle = alphaColor(fg, 0.3);
+    const maxR = Math.min(w, h) / 2;
+    ctx.strokeStyle = fg;
     ctx.lineWidth = lw;
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, r * 0.5, 0, Math.PI * 2); ctx.stroke();
-    // Crosshair
-    ctx.beginPath(); ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r); ctx.stroke();
+    for (let i = 1; i <= 4; i++) {
+      ctx.beginPath(); ctx.arc(cx, cy, maxR * i / 4, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.fillStyle = fg;
+    ctx.beginPath(); ctx.arc(cx, cy, lw * 2, 0, Math.PI * 2); ctx.fill();
   }
 
   // Color bar
@@ -323,6 +356,166 @@ function drawCenterText(ctx, w, h, fontSize, textColor, bgColor, p) {
   ctx.fillStyle = alphaColor(textColor, 0.6);
   ctx.fillText(info, cx, y); y += lineH;
   if (credits) { ctx.fillStyle = alphaColor(textColor, 0.4); ctx.fillText(credits, cx, y); }
+}
+
+function drawPM5544(ctx, p) {
+  const { width: w, height: h, name, credits, centerSize } = p;
+  const cx = w / 2, cy = h / 2;
+  const R = Math.min(w, h) * 0.42;
+  const tile = Math.round(Math.min(w, h) / 13);
+
+  // ── 1. Checkerboard background ──
+  const gDk = "#696969", gLt = "#969696";
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x += tile) {
+      const tx = Math.floor(x / tile), ty = Math.floor(y / tile);
+      ctx.fillStyle = (tx + ty) % 2 === 0 ? gLt : gDk;
+      ctx.fillRect(x, Math.floor(y / tile) * tile, tile, tile);
+    }
+  }
+  // Fill properly
+  ctx.fillStyle = gDk;
+  ctx.fillRect(0, 0, w, h);
+  for (let ty = 0; ty < Math.ceil(h / tile); ty++) {
+    for (let tx = 0; tx < Math.ceil(w / tile); tx++) {
+      ctx.fillStyle = (tx + ty) % 2 === 0 ? gLt : gDk;
+      ctx.fillRect(tx * tile, ty * tile, tile, tile);
+    }
+  }
+
+  // ── 2. Side strips ──
+  const sw = tile;
+  // Left
+  ctx.fillStyle = "#00b4a0"; ctx.fillRect(tile, tile, sw, h / 2 - tile * 2);
+  ctx.fillStyle = "#4050a0"; ctx.fillRect(tile, h / 2 - tile, sw, tile);
+  ctx.fillStyle = "#d04080"; ctx.fillRect(tile, h / 2 + tile, sw, h / 2 - tile * 3);
+  ctx.fillStyle = "#a07820"; ctx.fillRect(tile, h - tile * 2, sw, tile);
+  // Right
+  ctx.fillStyle = "#4050a0"; ctx.fillRect(w - tile * 2, tile, sw, h / 2 - tile * 2);
+  ctx.fillStyle = "#b0b020"; ctx.fillRect(w - tile * 2, h / 2 - tile, sw, tile);
+  ctx.fillStyle = "#8050c0"; ctx.fillRect(w - tile * 2, h / 2 + tile, sw, h / 2 - tile * 3);
+  ctx.fillStyle = "#a07820"; ctx.fillRect(w - tile * 2, h - tile * 2, sw, tile);
+  // Far-left hatching
+  for (let y = 0; y < h; y += 4) {
+    ctx.fillStyle = "#c06060";
+    ctx.fillRect(0, y, tile, 2);
+  }
+  // Far-right hatching
+  for (let x = w - tile; x < w; x += 4) {
+    ctx.fillStyle = "#c0c040";
+    ctx.fillRect(x, 0, 2, h);
+  }
+
+  // ── 3. Black circle fill ──
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, w, h);
+
+  // ── 4. White top cap ──
+  const capY = cy - R * 0.55;
+  for (let y = cy - R; y < capY; y++) {
+    const dy = y - cy;
+    const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(cx - hw, y, hw * 2, 1);
+  }
+
+  // ── 5. Yellow bottom crescent ──
+  const crescY = cy + R * 0.55;
+  for (let y = crescY; y <= cy + R; y++) {
+    const dy = y - cy;
+    const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
+    ctx.fillStyle = "#e0e000";
+    ctx.fillRect(cx - hw, y, hw * 2, 1);
+  }
+  // Red block in crescent
+  const redW = R * 0.18, redH = R * 0.12;
+  ctx.fillStyle = "#cc0000";
+  ctx.fillRect(cx - redW / 2, crescY + (cy + R - crescY) * 0.3, redW, redH);
+
+  // ── 6. Castellation ──
+  const castY = capY;
+  const castH = R * 0.1;
+  const castW = R * 1.5;
+  const numBars = 12;
+  const barW = castW / numBars;
+  for (let i = 0; i < numBars; i++) {
+    ctx.fillStyle = i % 2 === 0 ? "#fff" : "#000";
+    ctx.fillRect(cx - castW / 2 + i * barW, castY, barW, castH);
+  }
+
+  // ── 7. Color bars ──
+  const barColors = ["#e0e000", "#00d0d0", "#00d000", "#d000d0", "#d00000", "#0000d0"];
+  const cbY = castY + castH;
+  const cbH = R * 0.28;
+  const cbW = R * 1.5;
+  const segW = cbW / barColors.length;
+  barColors.forEach((c, i) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(cx - cbW / 2 + i * segW, cbY, segW, cbH);
+  });
+
+  // ── 8. Frequency bars ──
+  const freqY = cbY + cbH;
+  const freqH = R * 0.22;
+  const freqs = [1, 2, 4, 8, 16, 32];
+  const fSecW = cbW / freqs.length;
+  for (let fi = 0; fi < freqs.length; fi++) {
+    const freq = freqs[fi];
+    const fx0 = cx - cbW / 2 + fi * fSecW;
+    for (let x = fx0; x < fx0 + fSecW; x++) {
+      ctx.fillStyle = Math.floor((x - fx0) / freq) % 2 === 0 ? "#fff" : "#000";
+      ctx.fillRect(x, freqY, 1, freqH);
+    }
+  }
+
+  // ── 9. Grayscale ramp ──
+  const grayY = freqY + freqH;
+  const grayH = crescY - grayY;
+  const graySteps = 8;
+  const gsW = cbW / graySteps;
+  for (let i = 0; i < graySteps; i++) {
+    const v = Math.round(i * 255 / (graySteps - 1));
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillRect(cx - cbW / 2 + i * gsW, grayY, gsW, grayH);
+  }
+
+  ctx.restore();
+
+  // ── 10. Circle outline ──
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = Math.max(2, w / 400);
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // ── 11. Center text ──
+  const fontSize = Math.max(14, w / 40) * centerSize;
+  const lineH = fontSize * 1.4;
+  const info = `${p.cols} x ${p.rows}`;
+  const lines = [name, `${w} x ${h}`, info];
+  if (credits) lines.push(credits);
+
+  ctx.font = `${fontSize}px ${FONT}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const maxTW = Math.max(...lines.map((l) => ctx.measureText(l).width));
+  const boxW = maxTW + fontSize * 4;
+  const boxH = lineH * (lines.length + 1);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(cx - boxW / 2, cy - R * 0.3 - lineH, boxW, boxH);
+
+  let ty = cy - R * 0.3 - lineH + lineH;
+  ctx.fillStyle = "#fff";
+  ctx.fillText(name, cx, ty); ty += lineH;
+  ctx.fillText(`${w} x ${h}`, cx, ty); ty += lineH;
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.fillText(info, cx, ty); ty += lineH;
+  if (credits) { ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.fillText(credits, cx, ty); }
 }
 
 // ── Helpers ──
