@@ -34,6 +34,7 @@ let crossLayout = null;
 // ── State ──
 const surfaces = [];
 let activeIdx = 0;
+let viewCrossMode = false;
 
 const global = {
   preset: "elverket",
@@ -104,7 +105,7 @@ function rebuildSurfaceList() {
   global.surface = surfaces[activeIdx]?.name || "";
   surfaceController = surfacesFolder.add(global, "surface", names).name("Surface").onChange((v) => {
     const idx = surfaces.findIndex((s) => s.name === v);
-    if (idx >= 0) { loadSurface(idx); render(); }
+    if (idx >= 0) { viewCrossMode = false; loadSurface(idx); render(); }
   });
 }
 
@@ -124,6 +125,10 @@ function renderToCanvas(c, s) {
 }
 
 function render() {
+  if (viewCrossMode) {
+    const layout = getCrossLayout();
+    if (layout) { renderCrossTemplate(canvas, layout); return; }
+  }
   const s = surfaces[activeIdx];
   if (!s) return;
   renderToCanvas(canvas, s);
@@ -235,7 +240,8 @@ gui.add({ exportZip() {
 gui.add({ viewCross() {
   const layout = getCrossLayout();
   if (!layout) { alert("No cross layout available. Upload a UV JSON first."); return; }
-  renderCrossTemplate(canvas, layout);
+  viewCrossMode = true;
+  render();
 }}, "viewCross").name("View Cross Template");
 
 gui.add({ exportCross() {
