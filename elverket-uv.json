@@ -1,9 +1,15 @@
 {
-  "textureWidth": 6004,
-  "textureHeight": 3201,
+  "name": "elverket",
+  "crossTextureWidth": 6004,
+  "crossTextureHeight": 3201,
   "surfaces": {
     "Wall_Front": {
-      "uv": {
+      "w": 1320,
+      "h": 960,
+      "cols": 11,
+      "rows": 8,
+      "color": "#ff0000",
+      "crossUV": {
         "minU": 0.8405,
         "maxU": 1.0,
         "minV": 0.299,
@@ -13,7 +19,12 @@
       "flipY": false
     },
     "Wall_Rear": {
-      "uv": {
+      "w": 1320,
+      "h": 960,
+      "cols": 11,
+      "rows": 8,
+      "color": "#00ff00",
+      "crossUV": {
         "minU": 0,
         "maxU": 0.1595,
         "minV": 0.2991,
@@ -23,7 +34,12 @@
       "flipY": false
     },
     "Wall_Left": {
-      "uv": {
+      "w": 4089,
+      "h": 957,
+      "cols": 34,
+      "rows": 8,
+      "color": "#00ffff",
+      "crossUV": {
         "minU": 0.1594,
         "maxU": 0.841,
         "minV": 0.7008,
@@ -33,7 +49,12 @@
       "flipY": false
     },
     "Wall_Right": {
-      "uv": {
+      "w": 4089,
+      "h": 957,
+      "cols": 34,
+      "rows": 8,
+      "color": "#ffff00",
+      "crossUV": {
         "minU": 0.1595,
         "maxU": 0.8405,
         "minV": 0,
@@ -43,7 +64,12 @@
       "flipY": true
     },
     "Floor": {
-      "uv": {
+      "w": 4089,
+      "h": 1286,
+      "cols": 34,
+      "rows": 11,
+      "color": "#ff00ff",
+      "crossUV": {
         "minU": 0.1594,
         "maxU": 0.8405,
         "minV": 0.299,

@@ -3,29 +3,32 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
 const canvas = document.getElementById("canvas");
 const FONT = "'SF Mono', 'Fira Code', monospace";
 
-// ── Presets ──
+// ── Presets (built-in, can be overridden by UV JSON upload) ──
 const PRESETS = {
-  elverket: [
-    { name: "WALL FRONT", w: 1320, h: 960, cols: 11, rows: 8, color: "#ff0000" },
-    { name: "WALL REAR", w: 1320, h: 960, cols: 11, rows: 8, color: "#00ff00" },
-    { name: "WALL LEFT", w: 4089, h: 957, cols: 34, rows: 8, color: "#00ffff" },
-    { name: "WALL RIGHT", w: 4089, h: 957, cols: 34, rows: 8, color: "#ffff00" },
-    { name: "FLOOR", w: 4089, h: 1286, cols: 34, rows: 11, color: "#ff00ff" },
-  ],
-  "hd-16:9": [{ name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, color: "#ff0000" }],
-  "4k-16:9": [{ name: "SCREEN", w: 3840, h: 2160, cols: 16, rows: 9, color: "#ff0000" }],
-};
-
-const CROSS_LAYOUTS = {
   elverket: {
-    width: 6004, height: 3201,
-    surfaces: {
-      WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270, flipY: false },
-      WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 270, flipY: false },
-      WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0, flipY: false },
-      WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0, flipY: true },
-      FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0, flipY: false },
+    surfaces: [
+      { name: "WALL FRONT", w: 1320, h: 960, cols: 11, rows: 8, color: "#ff0000" },
+      { name: "WALL REAR", w: 1320, h: 960, cols: 11, rows: 8, color: "#00ff00" },
+      { name: "WALL LEFT", w: 4089, h: 957, cols: 34, rows: 8, color: "#00ffff" },
+      { name: "WALL RIGHT", w: 4089, h: 957, cols: 34, rows: 8, color: "#ffff00" },
+      { name: "FLOOR", w: 4089, h: 1286, cols: 34, rows: 11, color: "#ff00ff" },
+    ],
+    cross: {
+      width: 6004, height: 3201,
+      surfaces: {
+        WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270, flipY: false },
+        WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 270, flipY: false },
+        WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0, flipY: false },
+        WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0, flipY: true },
+        FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0, flipY: false },
+      },
     },
+  },
+  "hd-16:9": {
+    surfaces: [{ name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, color: "#ff0000" }],
+  },
+  "4k-16:9": {
+    surfaces: [{ name: "SCREEN", w: 3840, h: 2160, cols: 16, rows: 9, color: "#ff0000" }],
   },
 };
 
@@ -66,7 +69,8 @@ function loadPreset(key) {
   const preset = PRESETS[key];
   if (!preset) return;
   surfaces.length = 0;
-  preset.forEach((s) => surfaces.push({ ...s }));
+  preset.surfaces.forEach((s) => surfaces.push({ ...s }));
+  crossLayout = preset.cross || null;
   activeIdx = 0;
   loadSurface(0);
   rebuildSurfaceList();
@@ -261,15 +265,7 @@ gui.add({ uploadUV() {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        crossLayout = { width: data.textureWidth || 4096, height: data.textureHeight || 4096, surfaces: {} };
-        for (const [name, info] of Object.entries(data.surfaces || {})) {
-          const key = name.replace(/_/g, " ").toUpperCase().replace(/ /g, "_");
-          crossLayout.surfaces[key] = {
-            uv: info.uv || info,
-            rotation: info.rotation || 0,
-          };
-        }
-        alert(`UV layout loaded: ${Object.keys(crossLayout.surfaces).length} surfaces, ${crossLayout.width}x${crossLayout.height}`);
+        loadFromUVJSON(data);
       } catch (err) { alert("Failed to parse UV JSON: " + err.message); }
     };
     reader.readAsText(file);
@@ -277,12 +273,55 @@ gui.add({ uploadUV() {
   input.click();
 }}, "uploadUV").name("Upload UV JSON");
 
+function loadFromUVJSON(data) {
+  // Build surfaces list from JSON
+  surfaces.length = 0;
+  const crossSurfaces = {};
+
+  for (const [name, info] of Object.entries(data.surfaces || {})) {
+    const displayName = name.replace(/_/g, " ").toUpperCase();
+    const key = name.replace(/_/g, " ").toUpperCase().replace(/ /g, "_");
+
+    // Add to surfaces list
+    surfaces.push({
+      name: displayName,
+      w: info.w || 1920,
+      h: info.h || 1080,
+      cols: info.cols || 16,
+      rows: info.rows || 9,
+      color: info.color || "#ffffff",
+    });
+
+    // Add to cross layout
+    if (info.crossUV || info.uv) {
+      crossSurfaces[key] = {
+        uv: info.crossUV || info.uv,
+        rotation: info.rotation || 0,
+        flipY: info.flipY || false,
+      };
+    }
+  }
+
+  // Set cross layout
+  crossLayout = {
+    width: data.crossTextureWidth || data.textureWidth || 4096,
+    height: data.crossTextureHeight || data.textureHeight || 4096,
+    surfaces: crossSurfaces,
+  };
+
+  activeIdx = 0;
+  viewCrossMode = false;
+  loadSurface(0);
+  rebuildSurfaceList();
+  render();
+
+  const n = surfaces.length;
+  const hasCross = Object.keys(crossSurfaces).length > 0;
+  console.log(`Loaded ${n} surfaces from UV JSON${hasCross ? " with cross template" : ""}`);
+}
+
 function getCrossLayout() {
-  const presetKey = Object.keys(PRESETS).find((k) => {
-    const p = PRESETS[k];
-    return p.length === surfaces.length && p.every((s, i) => s.name === surfaces[i].name);
-  });
-  return crossLayout || (presetKey && CROSS_LAYOUTS[presetKey]) || null;
+  return crossLayout || null;
 }
 
 function renderCrossTemplate(c, layout) {
