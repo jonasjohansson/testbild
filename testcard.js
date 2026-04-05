@@ -18,14 +18,34 @@ const fields = {
   info: document.getElementById("surfaceInfo"),
 };
 
+// ── Presets ──
+const PRESETS = {
+  elverket: {
+    name: "Elverket",
+    surfaces: [
+      { name: "WALL FRONT", w: 1320, h: 960, cols: 11, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "11m x 8m" },
+      { name: "WALL REAR", w: 1320, h: 960, cols: 11, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "11m x 8m" },
+      { name: "WALL LEFT", w: 4089, h: 957, cols: 34, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "34m x 8m" },
+      { name: "WALL RIGHT", w: 4089, h: 957, cols: 34, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "34m x 8m" },
+      { name: "FLOOR", w: 4089, h: 1286, cols: 34, rows: 11, pattern: "grid", lineColor: "#cc0000", info: "34m x 11m" },
+    ],
+  },
+  hd: {
+    name: "HD 16:9",
+    surfaces: [
+      { name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, pattern: "grid", lineColor: "#cc0000", info: "1920x1080" },
+    ],
+  },
+  "4k": {
+    name: "4K 16:9",
+    surfaces: [
+      { name: "SCREEN", w: 3840, h: 2160, cols: 16, rows: 9, pattern: "grid", lineColor: "#cc0000", info: "3840x2160" },
+    ],
+  },
+};
+
 // ── Default surfaces (elverket) ──
-const defaults = [
-  { name: "WALL FRONT", w: 1920, h: 1080, cols: 11, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "11m x 8m" },
-  { name: "WALL REAR", w: 1920, h: 1080, cols: 11, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "11m x 8m" },
-  { name: "WALL LEFT", w: 1920, h: 1080, cols: 34, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "34m x 8m" },
-  { name: "WALL RIGHT", w: 1920, h: 1080, cols: 34, rows: 8, pattern: "grid", lineColor: "#cc0000", info: "34m x 8m" },
-  { name: "FLOOR", w: 1920, h: 1080, cols: 34, rows: 11, pattern: "grid", lineColor: "#cc0000", info: "34m x 11m" },
-];
+const defaults = PRESETS.elverket.surfaces;
 
 defaults.forEach((s) => surfaces.push({ ...s }));
 
@@ -338,6 +358,24 @@ function exportAll() {
   loadSurface(saved);
   renderSurfaceList();
 }
+
+// ── Preset selector ──
+const presetSelect = document.getElementById("presetSelect");
+Object.entries(PRESETS).forEach(([key, preset]) => {
+  const opt = document.createElement("option");
+  opt.value = key;
+  opt.textContent = preset.name;
+  presetSelect.appendChild(opt);
+});
+presetSelect.onchange = () => {
+  const preset = PRESETS[presetSelect.value];
+  if (!preset) return;
+  surfaces.length = 0;
+  preset.surfaces.forEach((s) => surfaces.push({ ...s }));
+  activeSurfaceIdx = 0;
+  loadSurface(0);
+  renderSurfaceList();
+};
 
 // ── Events ──
 document.getElementById("generate").onclick = generate;
