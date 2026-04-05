@@ -462,3 +462,4 @@ function alphaColor(hex, a) {
 surfaces.push({ ...DEFAULT_SURFACE });
 loadSurface(0);
 rebuildSurfaceList();
+render();
