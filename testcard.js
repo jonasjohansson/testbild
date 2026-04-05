@@ -284,6 +284,8 @@ function loadFromUVJSON(data) {
       ushapeSurfaces[key] = {
         uv: info.ushapeUV,
         rotation: info.ushapeRotation || 0,
+        cols: info.ushapeCols,
+        rows: info.ushapeRows,
       };
     }
   }
@@ -338,11 +340,16 @@ function renderPixelMap(c, layout) {
     const pw = Math.round((uv.maxU - uv.minU) * tw);
     const ph = Math.round((uv.maxV - uv.minV) * th);
 
+    // Use layout-specific cols/rows if provided, otherwise keep surface defaults
+    const surfOverride = { ...s };
+    if (entry.cols) surfOverride.cols = entry.cols;
+    if (entry.rows) surfOverride.rows = entry.rows;
+
     const tmp = document.createElement("canvas");
     const rad = rotation * Math.PI / 180;
 
     if (rotation === 90) {
-      renderToCanvas(tmp, { ...s, w: ph, h: pw });
+      renderToCanvas(tmp, { ...surfOverride, w: ph, h: pw });
       ctx.save();
       ctx.translate(px + pw, py);
       ctx.rotate(rad);
@@ -350,7 +357,7 @@ function renderPixelMap(c, layout) {
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else if (rotation === 270 || rotation === -90) {
-      renderToCanvas(tmp, { ...s, w: ph, h: pw });
+      renderToCanvas(tmp, { ...surfOverride, w: ph, h: pw });
       ctx.save();
       ctx.translate(px, py + ph);
       ctx.rotate(rad);
@@ -358,14 +365,14 @@ function renderPixelMap(c, layout) {
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else if (rotation === 180) {
-      renderToCanvas(tmp, { ...s, w: pw, h: ph });
+      renderToCanvas(tmp, { ...surfOverride, w: pw, h: ph });
       ctx.save();
       ctx.translate(px + pw, py + ph);
       ctx.rotate(rad);
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else {
-      renderToCanvas(tmp, { ...s, w: pw, h: ph });
+      renderToCanvas(tmp, { ...surfOverride, w: pw, h: ph });
       if (flipY) {
         ctx.save();
         ctx.translate(px, py + ph);

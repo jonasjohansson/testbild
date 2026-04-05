@@ -22,7 +22,8 @@
         "minV": 0.5,
         "maxV": 1
       },
-      "ushapeRotation": 0
+      "ushapeRotation": 0,
+      "ushapeCols": 11
     },
     "Wall_Rear": {
       "w": 1320,
@@ -43,7 +44,8 @@
         "minV": 0.5,
         "maxV": 1
       },
-      "ushapeRotation": 180
+      "ushapeRotation": 180,
+      "ushapeCols": 11
     },
     "Wall_Left": {
       "w": 4089,
@@ -64,7 +66,8 @@
         "minV": 0.5,
         "maxV": 1
       },
-      "ushapeRotation": 0
+      "ushapeRotation": 0,
+      "ushapeCols": 17
     },
     "Wall_Right": {
       "w": 4089,
@@ -85,7 +88,8 @@
         "minV": 0.5,
         "maxV": 1
       },
-      "ushapeRotation": 0
+      "ushapeRotation": 0,
+      "ushapeCols": 17
     },
     "Floor": {
       "w": 4089,
@@ -106,7 +110,8 @@
         "minV": 0,
         "maxV": 0.5
       },
-      "ushapeRotation": 0
+      "ushapeRotation": 0,
+      "ushapeCols": 34
     }
   },
   "ushapeTextureWidth": 4096,
