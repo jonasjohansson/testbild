@@ -13,7 +13,7 @@
     },
     "Wall_Rear": {
       "uv": {
-        "minU": -0.0,
+        "minU": 0,
         "maxU": 0.1595,
         "minV": 0.2991,
         "maxV": 0.7009
@@ -26,15 +26,6 @@
         "maxU": 0.841,
         "minV": 0.7008,
         "maxV": 1.0
-      },
-      "rotation": 0
-    },
-    "Wall_Right": {
-      "uv": {
-        "minU": 0.1595,
-        "maxU": 0.8405,
-        "minV": -0.0,
-        "maxV": 0.2992
       },
       "rotation": 0
     },
