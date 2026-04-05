@@ -264,8 +264,8 @@ function loadFromUVJSON(data) {
 
   // Set cross layout
   pixelMapLayout = {
-    width: data.pixelMapWidth || data.textureWidth || 4096,
-    height: data.pixelMapHeight || data.textureHeight || 4096,
+    width: data.pixelMapWidth || data.crossTextureWidth || data.textureWidth || 4096,
+    height: data.pixelMapHeight || data.crossTextureHeight || data.textureHeight || 4096,
     surfaces: pixelMapSurfaces,
   };
 
