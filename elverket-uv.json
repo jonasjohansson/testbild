@@ -15,7 +15,14 @@
         "minV": 0.2991,
         "maxV": 0.7009
       },
-      "rotation": 270
+      "rotation": 270,
+      "ushapeUV": {
+        "minU": 0.3805,
+        "maxU": 0.6195,
+        "minV": 0.0,
+        "maxV": 1
+      },
+      "ushapeRotation": 180
     },
     "Wall_Rear": {
       "w": 1320,
@@ -29,7 +36,14 @@
         "minV": 0.299,
         "maxV": 0.7009
       },
-      "rotation": 90
+      "rotation": 90,
+      "ushapeUV": {
+        "minU": 0.3807,
+        "maxU": 0.6198,
+        "minV": 0.0,
+        "maxV": 1
+      },
+      "ushapeRotation": 0
     },
     "Wall_Left": {
       "w": 4089,
@@ -43,7 +57,14 @@
         "minV": 0.7008,
         "maxV": 1.0
       },
-      "rotation": 0
+      "rotation": 0,
+      "ushapeUV": {
+        "minU": 0.0,
+        "maxU": 0.3804,
+        "minV": 0.0,
+        "maxV": 1
+      },
+      "ushapeRotation": 0
     },
     "Wall_Right": {
       "w": 4089,
@@ -57,7 +78,14 @@
         "minV": 0,
         "maxV": 0.2992
       },
-      "rotation": 0
+      "rotation": 0,
+      "ushapeUV": {
+        "minU": 0.6196,
+        "maxU": 1.0,
+        "minV": 0,
+        "maxV": 1
+      },
+      "ushapeRotation": 0
     },
     "Floor": {
       "w": 4089,
@@ -71,7 +99,16 @@
         "minV": 0.299,
         "maxV": 0.7009
       },
-      "rotation": 0
+      "rotation": 0,
+      "ushapeUV": {
+        "minU": 0.0004,
+        "maxU": 0.9996,
+        "minV": 0,
+        "maxV": 1.0
+      },
+      "ushapeRotation": 270
     }
-  }
+  },
+  "ushapeTextureWidth": 8192,
+  "ushapeTextureHeight": 960
 }

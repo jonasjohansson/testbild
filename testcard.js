@@ -7,6 +7,7 @@ const FONT = "'SF Mono', 'Fira Code', monospace";
 const DEFAULT_SURFACE = { name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, color: "#ff0000" };
 
 let pixelMapLayout = null;
+let ushapeLayout = null;
 
 // ── State ──
 const surfaces = [];
@@ -90,6 +91,9 @@ function renderToCanvas(c, s) {
 }
 
 function render() {
+  if (viewPixelMapMode === "ushape" && ushapeLayout) {
+    renderPixelMap(canvas, ushapeLayout); return;
+  }
   if (viewPixelMapMode) {
     const layout = getPixelMapLayout();
     if (layout) { renderPixelMap(canvas, layout); return; }
@@ -214,6 +218,19 @@ gui.add({ exportPixelMap() {
   downloadCanvas(c, "pixel_map.png");
 }}, "exportPixelMap").name("Export Pixel Map");
 
+gui.add({ viewUShape() {
+  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No UShape layout. Upload a UV JSON first."); return; }
+  viewPixelMapMode = "ushape";
+  render();
+}}, "viewUShape").name("View UShape");
+
+gui.add({ exportUShape() {
+  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No UShape layout. Upload a UV JSON first."); return; }
+  const c = document.createElement("canvas");
+  renderPixelMap(c, ushapeLayout);
+  downloadCanvas(c, "ushape_template.png");
+}}, "exportUShape").name("Export UShape");
+
 gui.add({ uploadUV() {
   const input = document.createElement("input");
   input.type = "file";
@@ -237,6 +254,7 @@ function loadFromUVJSON(data) {
   // Build surfaces list from JSON
   surfaces.length = 0;
   const pixelMapSurfaces = {};
+  const ushapeSurfaces = {};
 
   for (const [name, info] of Object.entries(data.surfaces || {})) {
     const displayName = name.replace(/_/g, " ").toUpperCase();
@@ -260,13 +278,28 @@ function loadFromUVJSON(data) {
         flipY: info.flipY || false,
       };
     }
+
+    // Add to ushape layout
+    if (info.ushapeUV) {
+      ushapeSurfaces[key] = {
+        uv: info.ushapeUV,
+        rotation: info.ushapeRotation || 0,
+      };
+    }
   }
 
-  // Set cross layout
+  // Set pixel map layout
   pixelMapLayout = {
     width: data.pixelMapWidth || data.crossTextureWidth || data.textureWidth || 4096,
     height: data.pixelMapHeight || data.crossTextureHeight || data.textureHeight || 4096,
     surfaces: pixelMapSurfaces,
+  };
+
+  // Set ushape layout
+  ushapeLayout = {
+    width: data.ushapeTextureWidth || 8192,
+    height: data.ushapeTextureHeight || 960,
+    surfaces: ushapeSurfaces,
   };
 
   activeIdx = 0;
@@ -276,8 +309,7 @@ function loadFromUVJSON(data) {
   render();
 
   const n = surfaces.length;
-  const hasCross = Object.keys(pixelMapSurfaces).length > 0;
-  console.log(`Loaded ${n} surfaces from UV JSON${hasCross ? " with pixel map" : ""}`);
+  console.log(`Loaded ${n} surfaces from UV JSON`);
 }
 
 function getPixelMapLayout() {
