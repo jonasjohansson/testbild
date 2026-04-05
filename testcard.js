@@ -199,26 +199,50 @@ pane.addButton({ title: "Export PNG" }).on("click", () => {
 });
 
 pane.addButton({ title: "Export All as ZIP" }).on("click", () => {
-  exportZip().catch((e) => { console.error("ZIP failed:", e); alert("ZIP failed: " + e.message); });
+  exportZip();
 });
 
-async function exportZip() {
-  const zip = new window.JSZip();
-  for (const s of surfaces) {
-    const c = document.createElement("canvas");
-    renderToCanvas(c, s);
-    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
-    zip.file(`${s.name.replace(/\s+/g, "_")}.png`, blob);
+function exportZip() {
+  try {
+    const zip = new window.JSZip();
+    let pending = surfaces.length;
+
+    surfaces.forEach((s) => {
+      const c = document.createElement("canvas");
+      renderToCanvas(c, s);
+      const filename = `${s.name.replace(/\s+/g, "_")}.png`;
+
+      c.toBlob((blob) => {
+        if (blob) {
+          zip.file(filename, blob);
+        } else {
+          // Fallback: dataURL to blob
+          const dataUrl = c.toDataURL("image/png");
+          const binary = atob(dataUrl.split(",")[1]);
+          const arr = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+          zip.file(filename, arr);
+        }
+
+        pending--;
+        if (pending === 0) {
+          zip.generateAsync({ type: "blob" }).then((content) => {
+            const url = URL.createObjectURL(content);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "testbild.zip";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+          });
+        }
+      }, "image/png");
+    });
+  } catch (e) {
+    console.error("ZIP export error:", e);
+    alert("ZIP export failed: " + e.message);
   }
-  const content = await zip.generateAsync({ type: "blob" });
-  const url = URL.createObjectURL(content);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "testcards.zip";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ── Drawing ──
