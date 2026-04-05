@@ -109,6 +109,6 @@
       "ushapeRotation": 0
     }
   },
-  "ushapeTextureWidth": 8192,
-  "ushapeTextureHeight": 960
+  "ushapeTextureWidth": 4096,
+  "ushapeTextureHeight": 2048
 }
