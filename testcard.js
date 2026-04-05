@@ -232,12 +232,14 @@ gui.add({ exportZip() {
   }
 }}, "exportZip").name("Export All as ZIP");
 
+gui.add({ viewCross() {
+  const layout = getCrossLayout();
+  if (!layout) { alert("No cross layout available. Upload a UV JSON first."); return; }
+  renderCrossTemplate(canvas, layout);
+}}, "viewCross").name("View Cross Template");
+
 gui.add({ exportCross() {
-  const presetKey = Object.keys(PRESETS).find((k) => {
-    const p = PRESETS[k];
-    return p.length === surfaces.length && p.every((s, i) => s.name === surfaces[i].name);
-  });
-  const layout = crossLayout || (presetKey && CROSS_LAYOUTS[presetKey]);
+  const layout = getCrossLayout();
   if (!layout) { alert("No cross layout available. Upload a UV JSON first."); return; }
   const c = document.createElement("canvas");
   renderCrossTemplate(c, layout);
@@ -267,6 +269,14 @@ gui.add({ uploadUV() {
   };
   input.click();
 }}, "uploadUV").name("Upload UV JSON");
+
+function getCrossLayout() {
+  const presetKey = Object.keys(PRESETS).find((k) => {
+    const p = PRESETS[k];
+    return p.length === surfaces.length && p.every((s, i) => s.name === surfaces[i].name);
+  });
+  return crossLayout || (presetKey && CROSS_LAYOUTS[presetKey]) || null;
+}
 
 function renderCrossTemplate(c, layout) {
   const { width: tw, height: th, surfaces: uvSurfaces } = layout;
