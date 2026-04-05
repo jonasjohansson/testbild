@@ -13,7 +13,7 @@ const PRESETS = {
       { name: "WALL RIGHT", w: 4089, h: 957, cols: 34, rows: 8, color: "#ffff00" },
       { name: "FLOOR", w: 4089, h: 1286, cols: 34, rows: 11, color: "#ff00ff" },
     ],
-    cross: {
+    pixelMap: {
       width: 6004, height: 3201,
       surfaces: {
         WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270, flipY: false },
@@ -32,12 +32,12 @@ const PRESETS = {
   },
 };
 
-let crossLayout = null;
+let pixelMapLayout = null;
 
 // ── State ──
 const surfaces = [];
 let activeIdx = 0;
-let viewCrossMode = false;
+let viewPixelMapMode = false;
 
 const global = {
   preset: "elverket",
@@ -70,7 +70,7 @@ function loadPreset(key) {
   if (!preset) return;
   surfaces.length = 0;
   preset.surfaces.forEach((s) => surfaces.push({ ...s }));
-  crossLayout = preset.cross || null;
+  pixelMapLayout = preset.pixelMap || null;
   activeIdx = 0;
   loadSurface(0);
   rebuildSurfaceList();
@@ -108,7 +108,7 @@ function rebuildSurfaceList() {
   global.surface = surfaces[activeIdx]?.name || "";
   surfaceController = surfacesFolder.add(global, "surface", names).name("Surface").onChange((v) => {
     const idx = surfaces.findIndex((s) => s.name === v);
-    if (idx >= 0) { viewCrossMode = false; loadSurface(idx); render(); }
+    if (idx >= 0) { viewPixelMapMode = false; loadSurface(idx); render(); }
   });
 }
 
@@ -128,9 +128,9 @@ function renderToCanvas(c, s) {
 }
 
 function render() {
-  if (viewCrossMode) {
-    const layout = getCrossLayout();
-    if (layout) { renderCrossTemplate(canvas, layout); return; }
+  if (viewPixelMapMode) {
+    const layout = getPixelMapLayout();
+    if (layout) { renderPixelMap(canvas, layout); return; }
   }
   const s = surfaces[activeIdx];
   if (!s) return;
@@ -239,20 +239,20 @@ gui.add({ exportZip() {
   }
 }}, "exportZip").name("Export All as ZIP");
 
-gui.add({ viewCross() {
-  const layout = getCrossLayout();
-  if (!layout) { alert("No cross layout available. Upload a UV JSON first."); return; }
-  viewCrossMode = true;
+gui.add({ viewPixelMap() {
+  const layout = getPixelMapLayout();
+  if (!layout) { alert("No pixel map layout available. Upload a UV JSON first."); return; }
+  viewPixelMapMode = true;
   render();
-}}, "viewCross").name("View Cross Template");
+}}, "viewPixelMap").name("View Pixel Map");
 
-gui.add({ exportCross() {
-  const layout = getCrossLayout();
-  if (!layout) { alert("No cross layout available. Upload a UV JSON first."); return; }
+gui.add({ exportPixelMap() {
+  const layout = getPixelMapLayout();
+  if (!layout) { alert("No pixel map layout available. Upload a UV JSON first."); return; }
   const c = document.createElement("canvas");
-  renderCrossTemplate(c, layout);
-  downloadCanvas(c, "cross_template.png");
-}}, "exportCross").name("Export Cross Template");
+  renderPixelMap(c, layout);
+  downloadCanvas(c, "pixel_map.png");
+}}, "exportPixelMap").name("Export Pixel Map");
 
 gui.add({ uploadUV() {
   const input = document.createElement("input");
@@ -276,7 +276,7 @@ gui.add({ uploadUV() {
 function loadFromUVJSON(data) {
   // Build surfaces list from JSON
   surfaces.length = 0;
-  const crossSurfaces = {};
+  const pixelMapSurfaces = {};
 
   for (const [name, info] of Object.entries(data.surfaces || {})) {
     const displayName = name.replace(/_/g, " ").toUpperCase();
@@ -292,10 +292,10 @@ function loadFromUVJSON(data) {
       color: info.color || "#ffffff",
     });
 
-    // Add to cross layout
-    if (info.crossUV || info.uv) {
-      crossSurfaces[key] = {
-        uv: info.crossUV || info.uv,
+    // Add to pixel map layout
+    if (info.crossUV || info.pixelMapUV || info.uv) {
+      pixelMapSurfaces[key] = {
+        uv: info.crossUV || info.pixelMapUV || info.uv,
         rotation: info.rotation || 0,
         flipY: info.flipY || false,
       };
@@ -303,28 +303,28 @@ function loadFromUVJSON(data) {
   }
 
   // Set cross layout
-  crossLayout = {
-    width: data.crossTextureWidth || data.textureWidth || 4096,
-    height: data.crossTextureHeight || data.textureHeight || 4096,
-    surfaces: crossSurfaces,
+  pixelMapLayout = {
+    width: data.pixelMapWidth || data.textureWidth || 4096,
+    height: data.pixelMapHeight || data.textureHeight || 4096,
+    surfaces: pixelMapSurfaces,
   };
 
   activeIdx = 0;
-  viewCrossMode = false;
+  viewPixelMapMode = false;
   loadSurface(0);
   rebuildSurfaceList();
   render();
 
   const n = surfaces.length;
-  const hasCross = Object.keys(crossSurfaces).length > 0;
-  console.log(`Loaded ${n} surfaces from UV JSON${hasCross ? " with cross template" : ""}`);
+  const hasCross = Object.keys(pixelMapSurfaces).length > 0;
+  console.log(`Loaded ${n} surfaces from UV JSON${hasCross ? " with pixel map" : ""}`);
 }
 
-function getCrossLayout() {
-  return crossLayout || null;
+function getPixelMapLayout() {
+  return pixelMapLayout || null;
 }
 
-function renderCrossTemplate(c, layout) {
+function renderPixelMap(c, layout) {
   const { width: tw, height: th, surfaces: uvSurfaces } = layout;
   c.width = tw;
   c.height = th;
