@@ -3,34 +3,8 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm";
 const canvas = document.getElementById("canvas");
 const FONT = "'SF Mono', 'Fira Code', monospace";
 
-// ── Presets (built-in, can be overridden by UV JSON upload) ──
-const PRESETS = {
-  elverket: {
-    surfaces: [
-      { name: "WALL FRONT", w: 1320, h: 960, cols: 11, rows: 8, color: "#ff0000" },
-      { name: "WALL REAR", w: 1320, h: 960, cols: 11, rows: 8, color: "#00ff00" },
-      { name: "WALL LEFT", w: 4089, h: 957, cols: 34, rows: 8, color: "#00ffff" },
-      { name: "WALL RIGHT", w: 4089, h: 957, cols: 34, rows: 8, color: "#ffff00" },
-      { name: "FLOOR", w: 4089, h: 1286, cols: 34, rows: 11, color: "#ff00ff" },
-    ],
-    pixelMap: {
-      width: 6004, height: 3201,
-      surfaces: {
-        WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270, flipY: false },
-        WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 270, flipY: false },
-        WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0, flipY: false },
-        WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0, flipY: true },
-        FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0, flipY: false },
-      },
-    },
-  },
-  "hd-16:9": {
-    surfaces: [{ name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, color: "#ff0000" }],
-  },
-  "4k-16:9": {
-    surfaces: [{ name: "SCREEN", w: 3840, h: 2160, cols: 16, rows: 9, color: "#ff0000" }],
-  },
-};
+// ── Default surface (before UV JSON is loaded) ──
+const DEFAULT_SURFACE = { name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, color: "#ff0000" };
 
 let pixelMapLayout = null;
 
@@ -40,8 +14,7 @@ let activeIdx = 0;
 let viewPixelMapMode = false;
 
 const global = {
-  preset: "elverket",
-  surface: "WALL FRONT",
+  surface: "SCREEN",
   pattern: "Grid",
   lineWidth: 2,
   cellSize: 0.75,
@@ -65,17 +38,6 @@ const surface = {
 // ── Surfaces ──
 let surfaceController = null;
 
-function loadPreset(key) {
-  const preset = PRESETS[key];
-  if (!preset) return;
-  surfaces.length = 0;
-  preset.surfaces.forEach((s) => surfaces.push({ ...s }));
-  pixelMapLayout = preset.pixelMap || null;
-  activeIdx = 0;
-  loadSurface(0);
-  rebuildSurfaceList();
-  render();
-}
 
 function loadSurface(idx) {
   if (idx < 0 || idx >= surfaces.length) return;
@@ -139,8 +101,6 @@ function render() {
 
 // ── lil-gui ──
 const gui = new GUI({ title: "Testbild" });
-
-gui.add(global, "preset", Object.keys(PRESETS)).name("Preset").onChange((v) => loadPreset(v));
 
 const surfacesFolder = gui.addFolder("Surfaces");
 surfacesFolder.add({ add() {
@@ -499,5 +459,6 @@ function alphaColor(hex, a) {
 }
 
 // ── Init ──
-loadPreset("elverket");
+surfaces.push({ ...DEFAULT_SURFACE });
+loadSurface(0);
 rebuildSurfaceList();
