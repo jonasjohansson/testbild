@@ -29,6 +29,15 @@
       },
       "rotation": 0
     },
+    "Wall_Right": {
+      "uv": {
+        "minU": 0.1595,
+        "maxU": 0.8405,
+        "minV": 0,
+        "maxV": 0.2992
+      },
+      "rotation": 0
+    },
     "Floor": {
       "uv": {
         "minU": 0.1594,
