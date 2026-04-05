@@ -20,11 +20,11 @@ const CROSS_LAYOUTS = {
   elverket: {
     width: 6004, height: 3201,
     surfaces: {
-      WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270 },
-      WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 270 },
-      WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0 },
-      WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0 },  // re-export after fixing Blender UVs
-      FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0 },
+      WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270, flipY: false },
+      WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 270, flipY: false },
+      WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0, flipY: false },
+      WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0, flipY: true },
+      FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0, flipY: false },
     },
   },
 };
@@ -298,9 +298,9 @@ function renderCrossTemplate(c, layout) {
     const entry = uvSurfaces[key];
     if (!entry) continue;
 
-    // Support both flat format { minU, ... } and nested { uv: { minU, ... }, rotation }
     const uv = entry.uv || entry;
     const rotation = entry.rotation || 0;
+    const flipY = entry.flipY || false;
 
     const px = Math.round(uv.minU * tw);
     const py = Math.round((1 - uv.maxV) * th);
@@ -315,6 +315,7 @@ function renderCrossTemplate(c, layout) {
       ctx.save();
       ctx.translate(px + pw, py);
       ctx.rotate(rad);
+      if (flipY) { ctx.scale(1, -1); ctx.translate(0, -ph); }
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else if (rotation === 270 || rotation === -90) {
@@ -322,6 +323,7 @@ function renderCrossTemplate(c, layout) {
       ctx.save();
       ctx.translate(px, py + ph);
       ctx.rotate(rad);
+      if (flipY) { ctx.scale(1, -1); ctx.translate(0, -ph); }
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else if (rotation === 180) {
@@ -333,7 +335,15 @@ function renderCrossTemplate(c, layout) {
       ctx.restore();
     } else {
       renderToCanvas(tmp, { ...s, w: pw, h: ph });
-      ctx.drawImage(tmp, px, py);
+      if (flipY) {
+        ctx.save();
+        ctx.translate(px, py + ph);
+        ctx.scale(1, -1);
+        ctx.drawImage(tmp, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.drawImage(tmp, px, py);
+      }
     }
   }
 }
