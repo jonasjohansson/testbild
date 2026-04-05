@@ -203,16 +203,7 @@ pane.addButton({ title: "Export All as ZIP" }).on("click", () => {
 });
 
 async function exportZip() {
-  if (!window.JSZip) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
-      s.onload = resolve;
-      s.onerror = () => reject(new Error("Failed to load JSZip"));
-      document.head.appendChild(s);
-    });
-  }
-  const zip = new JSZip();
+  const zip = new window.JSZip();
   for (const s of surfaces) {
     const c = document.createElement("canvas");
     renderToCanvas(c, s);
@@ -361,52 +352,53 @@ function drawCenterText(ctx, w, h, fontSize, textColor, bgColor, p) {
 function drawPM5544(ctx, p) {
   const { width: w, height: h, name, credits, centerSize } = p;
   const cx = w / 2, cy = h / 2;
-  const R = Math.min(w, h) * 0.42;
+  const R = Math.min(w, h) * 0.45;
   const tile = Math.round(Math.min(w, h) / 13);
+  const lw = Math.max(1, Math.round(w / 600));
 
   // ── 1. Checkerboard background ──
-  const gDk = "#696969", gLt = "#969696";
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x += tile) {
-      const tx = Math.floor(x / tile), ty = Math.floor(y / tile);
-      ctx.fillStyle = (tx + ty) % 2 === 0 ? gLt : gDk;
-      ctx.fillRect(x, Math.floor(y / tile) * tile, tile, tile);
-    }
-  }
-  // Fill properly
-  ctx.fillStyle = gDk;
-  ctx.fillRect(0, 0, w, h);
+  // Top and bottom rows: black/white, middle rows: gray/gray
   for (let ty = 0; ty < Math.ceil(h / tile); ty++) {
+    const isEdgeRow = ty === 0 || ty >= Math.ceil(h / tile) - 1;
     for (let tx = 0; tx < Math.ceil(w / tile); tx++) {
-      ctx.fillStyle = (tx + ty) % 2 === 0 ? gLt : gDk;
+      const isEdgeCol = tx === 0 || tx >= Math.ceil(w / tile) - 1;
+      if (isEdgeRow || isEdgeCol) {
+        ctx.fillStyle = (tx + ty) % 2 === 0 ? "#ffffff" : "#000000";
+      } else {
+        ctx.fillStyle = (tx + ty) % 2 === 0 ? "#999999" : "#666666";
+      }
       ctx.fillRect(tx * tile, ty * tile, tile, tile);
     }
   }
 
   // ── 2. Side strips ──
   const sw = tile;
-  // Left
-  ctx.fillStyle = "#00b4a0"; ctx.fillRect(tile, tile, sw, h / 2 - tile * 2);
-  ctx.fillStyle = "#4050a0"; ctx.fillRect(tile, h / 2 - tile, sw, tile);
-  ctx.fillStyle = "#d04080"; ctx.fillRect(tile, h / 2 + tile, sw, h / 2 - tile * 3);
-  ctx.fillStyle = "#a07820"; ctx.fillRect(tile, h - tile * 2, sw, tile);
-  // Right
-  ctx.fillStyle = "#4050a0"; ctx.fillRect(w - tile * 2, tile, sw, h / 2 - tile * 2);
-  ctx.fillStyle = "#b0b020"; ctx.fillRect(w - tile * 2, h / 2 - tile, sw, tile);
-  ctx.fillStyle = "#8050c0"; ctx.fillRect(w - tile * 2, h / 2 + tile, sw, h / 2 - tile * 3);
-  ctx.fillStyle = "#a07820"; ctx.fillRect(w - tile * 2, h - tile * 2, sw, tile);
-  // Far-left hatching
-  for (let y = 0; y < h; y += 4) {
-    ctx.fillStyle = "#c06060";
-    ctx.fillRect(0, y, tile, 2);
+  const midY = cy;
+  // Left column 1 (inside edge)
+  ctx.fillStyle = "#00c8a0"; ctx.fillRect(tile, tile, sw, midY - tile * 2);           // teal (top half)
+  ctx.fillStyle = "#5060c0"; ctx.fillRect(tile, midY - tile, sw, tile);               // blue
+  ctx.fillStyle = "#e04888"; ctx.fillRect(tile, midY + tile, sw, h - midY - tile * 3); // pink (bottom)
+  ctx.fillStyle = "#b08820"; ctx.fillRect(tile, h - tile * 2, sw, tile);               // brown
+
+  // Right column 1 (inside edge)
+  ctx.fillStyle = "#5060c0"; ctx.fillRect(w - tile * 2, tile, sw, midY - tile * 2);    // blue (top)
+  ctx.fillStyle = "#c0b830"; ctx.fillRect(w - tile * 2, midY - tile, sw, tile);        // olive
+  ctx.fillStyle = "#7848c8"; ctx.fillRect(w - tile * 2, midY + tile, sw, h - midY - tile * 3); // purple
+  ctx.fillStyle = "#b08820"; ctx.fillRect(w - tile * 2, h - tile * 2, sw, tile);       // brown
+
+  // Far-left: horizontal red/gray hatching
+  const hatchSize = Math.max(2, Math.round(tile / 12));
+  for (let y = 0; y < h; y += hatchSize * 2) {
+    ctx.fillStyle = "#d06868";
+    ctx.fillRect(0, y, tile, hatchSize);
   }
-  // Far-right hatching
-  for (let x = w - tile; x < w; x += 4) {
-    ctx.fillStyle = "#c0c040";
-    ctx.fillRect(x, 0, 2, h);
+  // Far-right: vertical yellow/blue hatching
+  for (let x = w - tile; x < w; x += hatchSize * 2) {
+    ctx.fillStyle = "#d0d050";
+    ctx.fillRect(x, 0, hatchSize, h);
   }
 
-  // ── 3. Black circle fill ──
+  // ── 3. Circle interior ──
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -415,86 +407,119 @@ function drawPM5544(ctx, p) {
   ctx.fillRect(0, 0, w, h);
 
   // ── 4. White top cap ──
-  const capY = cy - R * 0.55;
-  for (let y = cy - R; y < capY; y++) {
+  const capBottom = cy - R * 0.50;
+  for (let y = Math.floor(cy - R); y < capBottom; y++) {
     const dy = y - cy;
     const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(cx - hw, y, hw * 2, 1);
+  }
+  // Black notch at top center of white cap
+  const notchW = R * 0.08;
+  const notchH = R * 0.18;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(cx - notchW / 2, cy - R, notchW, notchH);
+  // Vertical center line from notch
+  ctx.fillRect(cx - lw / 2, cy - R + notchH, lw, capBottom - (cy - R + notchH));
+
+  // ── 5. White bottom crescent (between grayscale and yellow) ──
+  const whiteBottom = cy + R * 0.42;
+  const yellowTop = cy + R * 0.50;
+  for (let y = Math.floor(whiteBottom); y < yellowTop; y++) {
+    const dy = y - cy;
+    const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(cx - hw, y, hw * 2, 1);
   }
 
-  // ── 5. Yellow bottom crescent ──
-  const crescY = cy + R * 0.55;
-  for (let y = crescY; y <= cy + R; y++) {
+  // ── 6. Yellow bottom crescent ──
+  for (let y = Math.floor(yellowTop); y <= cy + R; y++) {
     const dy = y - cy;
     const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
-    ctx.fillStyle = "#e0e000";
+    ctx.fillStyle = "#d8d800";
     ctx.fillRect(cx - hw, y, hw * 2, 1);
   }
-  // Red block in crescent
-  const redW = R * 0.18, redH = R * 0.12;
-  ctx.fillStyle = "#cc0000";
-  ctx.fillRect(cx - redW / 2, crescY + (cy + R - crescY) * 0.3, redW, redH);
+  // Red block in yellow crescent
+  const redW = R * 0.14, redH = R * 0.14;
+  const redY = yellowTop + (cy + R - yellowTop) * 0.2;
+  ctx.fillStyle = "#d00000";
+  ctx.fillRect(cx - redW / 2, redY, redW, redH);
 
-  // ── 6. Castellation ──
-  const castY = capY;
-  const castH = R * 0.1;
-  const castW = R * 1.5;
-  const numBars = 12;
-  const barW = castW / numBars;
-  for (let i = 0; i < numBars; i++) {
-    ctx.fillStyle = i % 2 === 0 ? "#fff" : "#000";
-    ctx.fillRect(cx - castW / 2 + i * barW, castY, barW, castH);
+  // ── 7. Castellation bars ──
+  const castY0 = capBottom;
+  const castH = R * 0.08;
+  const innerW = R * 1.4;
+  // Alternating black/white with varying widths (wider at edges, narrower at center)
+  const castBars = 16;
+  const castBarW = innerW / castBars;
+  for (let i = 0; i < castBars; i++) {
+    ctx.fillStyle = i % 2 === 0 ? "#c0c0c0" : "#000000";
+    ctx.fillRect(cx - innerW / 2 + i * castBarW, castY0, castBarW, castH);
   }
+  // White side patches next to castellation
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(cx - innerW / 2 - R * 0.12, castY0, R * 0.12, castH);
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(cx + innerW / 2, castY0, R * 0.12, castH);
 
-  // ── 7. Color bars ──
-  const barColors = ["#e0e000", "#00d0d0", "#00d000", "#d000d0", "#d00000", "#0000d0"];
-  const cbY = castY + castH;
-  const cbH = R * 0.28;
-  const cbW = R * 1.5;
-  const segW = cbW / barColors.length;
+  // ── 8. Color bars ──
+  const cbY0 = castY0 + castH;
+  const cbH = R * 0.24;
+  const barColors = ["#c8c800", "#00c8c8", "#00c800", "#c800c8", "#c80000", "#0000c8"];
+  const cbTotalW = innerW;
+  const segW = cbTotalW / barColors.length;
+  // Black separator between each bar
+  const sepW = Math.max(1, lw);
   barColors.forEach((c, i) => {
     ctx.fillStyle = c;
-    ctx.fillRect(cx - cbW / 2 + i * segW, cbY, segW, cbH);
+    ctx.fillRect(cx - cbTotalW / 2 + i * segW + sepW / 2, cbY0, segW - sepW, cbH);
   });
+  // Black center column (between green and magenta, slightly wider)
+  ctx.fillStyle = "#000";
+  ctx.fillRect(cx - lw * 2, cbY0, lw * 4, cbH);
 
-  // ── 8. Frequency bars ──
-  const freqY = cbY + cbH;
-  const freqH = R * 0.22;
-  const freqs = [1, 2, 4, 8, 16, 32];
-  const fSecW = cbW / freqs.length;
+  // ── 9. Horizontal white line ──
+  const lineY = cbY0 + cbH;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(cx - innerW / 2, lineY, innerW, lw);
+
+  // ── 10. Frequency/resolution bars ──
+  const freqY0 = lineY + lw;
+  const freqH = R * 0.20;
+  const freqs = [1, 2, 3, 5, 8, 14];
+  const fSecW = innerW / freqs.length;
   for (let fi = 0; fi < freqs.length; fi++) {
     const freq = freqs[fi];
-    const fx0 = cx - cbW / 2 + fi * fSecW;
-    for (let x = fx0; x < fx0 + fSecW; x++) {
-      ctx.fillStyle = Math.floor((x - fx0) / freq) % 2 === 0 ? "#fff" : "#000";
-      ctx.fillRect(x, freqY, 1, freqH);
+    const fx0 = cx - innerW / 2 + fi * fSecW;
+    for (let x = Math.floor(fx0); x < fx0 + fSecW; x++) {
+      ctx.fillStyle = Math.floor((x - fx0) / freq) % 2 === 0 ? "#ffffff" : "#000000";
+      ctx.fillRect(x, freqY0, 1, freqH);
     }
   }
 
-  // ── 9. Grayscale ramp ──
-  const grayY = freqY + freqH;
-  const grayH = crescY - grayY;
-  const graySteps = 8;
-  const gsW = cbW / graySteps;
+  // ── 11. Grayscale ramp ──
+  const grayY0 = freqY0 + freqH;
+  const grayH = whiteBottom - grayY0;
+  const graySteps = 6;
+  const gsW = innerW / graySteps;
   for (let i = 0; i < graySteps; i++) {
     const v = Math.round(i * 255 / (graySteps - 1));
     ctx.fillStyle = `rgb(${v},${v},${v})`;
-    ctx.fillRect(cx - cbW / 2 + i * gsW, grayY, gsW, grayH);
+    ctx.fillRect(cx - innerW / 2 + i * gsW, grayY0, gsW, grayH);
   }
 
   ctx.restore();
 
-  // ── 10. Circle outline ──
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = Math.max(2, w / 400);
+  // ── 12. Circle outline ──
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = Math.max(2, lw * 1.5);
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.stroke();
 
-  // ── 11. Center text ──
-  const fontSize = Math.max(14, w / 40) * centerSize;
-  const lineH = fontSize * 1.4;
+  // ── 13. Center text overlay ──
+  const fontSize = Math.max(12, w / 50) * centerSize;
+  const lineH = fontSize * 1.3;
   const info = `${p.cols} x ${p.rows}`;
   const lines = [name, `${w} x ${h}`, info];
   if (credits) lines.push(credits);
@@ -504,12 +529,13 @@ function drawPM5544(ctx, p) {
   ctx.textBaseline = "middle";
 
   const maxTW = Math.max(...lines.map((l) => ctx.measureText(l).width));
-  const boxW = maxTW + fontSize * 4;
-  const boxH = lineH * (lines.length + 1);
+  const boxW = maxTW + fontSize * 3;
+  const boxH = lineH * (lines.length + 0.8);
+  const boxY = cy - R * 0.32;
   ctx.fillStyle = "#000";
-  ctx.fillRect(cx - boxW / 2, cy - R * 0.3 - lineH, boxW, boxH);
+  ctx.fillRect(cx - boxW / 2, boxY, boxW, boxH);
 
-  let ty = cy - R * 0.3 - lineH + lineH;
+  let ty = boxY + lineH * 0.8;
   ctx.fillStyle = "#fff";
   ctx.fillText(name, cx, ty); ty += lineH;
   ctx.fillText(`${w} x ${h}`, cx, ty); ty += lineH;
