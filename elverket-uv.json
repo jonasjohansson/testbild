@@ -1,0 +1,46 @@
+{
+  "textureWidth": 6004,
+  "textureHeight": 3201,
+  "surfaces": {
+    "Wall_Front": {
+      "uv": {
+        "minU": 0.8405,
+        "maxU": 1.0,
+        "minV": 0.299,
+        "maxV": 0.7009
+      }
+    },
+    "Wall_Rear": {
+      "uv": {
+        "minU": -0.0,
+        "maxU": 0.1595,
+        "minV": 0.2991,
+        "maxV": 0.7009
+      }
+    },
+    "Wall_Left": {
+      "uv": {
+        "minU": 0.1594,
+        "maxU": 0.841,
+        "minV": 0.7008,
+        "maxV": 1.0
+      }
+    },
+    "Wall_Right": {
+      "uv": {
+        "minU": 0.1595,
+        "maxU": 0.8405,
+        "minV": -0.0,
+        "maxV": 0.2992
+      }
+    },
+    "Floor": {
+      "uv": {
+        "minU": 0.1594,
+        "maxU": 0.8405,
+        "minV": 0.299,
+        "maxV": 0.7009
+      }
+    }
+  }
+}

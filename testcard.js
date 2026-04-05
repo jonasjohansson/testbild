@@ -16,6 +16,22 @@ const PRESETS = {
   "4k-16:9": [{ name: "SCREEN", w: 3840, h: 2160, cols: 16, rows: 9, color: "#ff0000" }],
 };
 
+// ── Cross template UV layouts (from Blender) ──
+const CROSS_LAYOUTS = {
+  elverket: {
+    width: 6004, height: 3201,
+    surfaces: {
+      WALL_FRONT: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 },
+      WALL_REAR:  { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 },
+      WALL_LEFT:  { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 },
+      WALL_RIGHT: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 },
+      FLOOR:      { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 },
+    },
+  },
+};
+
+let crossLayout = null;
+
 // ── State ──
 const surfaces = [];
 let activeIdx = 0;
@@ -245,6 +261,86 @@ function exportZip() {
   }
 }
 
+// Cross template export
+pane.addButton({ title: "Export Cross Template" }).on("click", () => {
+  const presetKey = Object.keys(PRESETS).find((k) => {
+    const p = PRESETS[k];
+    return p.length === surfaces.length && p.every((s, i) => s.name === surfaces[i].name);
+  });
+  const layout = crossLayout || (presetKey && CROSS_LAYOUTS[presetKey]);
+  if (!layout) {
+    alert("No cross layout available. Upload a UV JSON or use a preset with a cross layout.");
+    return;
+  }
+  const c = document.createElement("canvas");
+  renderCrossTemplate(c, layout);
+  downloadCanvas(c, "cross_template.png");
+});
+
+// UV JSON upload
+pane.addButton({ title: "Upload UV JSON" }).on("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        crossLayout = {
+          width: data.textureWidth || 4096,
+          height: data.textureHeight || 4096,
+          surfaces: {},
+        };
+        for (const [name, info] of Object.entries(data.surfaces || {})) {
+          const key = name.replace(/_/g, " ").toUpperCase().replace(/ /g, "_");
+          crossLayout.surfaces[key] = info.uv || info;
+        }
+        console.log("Loaded cross layout:", crossLayout);
+        alert(`UV layout loaded: ${Object.keys(crossLayout.surfaces).length} surfaces, ${crossLayout.width}x${crossLayout.height}`);
+      } catch (err) {
+        alert("Failed to parse UV JSON: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+
+function renderCrossTemplate(c, layout) {
+  const { width: tw, height: th, surfaces: uvSurfaces } = layout;
+  c.width = tw;
+  c.height = th;
+  const ctx = c.getContext("2d");
+
+  // Black background
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, tw, th);
+
+  // Render each surface into its UV region
+  for (const s of surfaces) {
+    const key = s.name.replace(/\s+/g, "_").toUpperCase();
+    const uv = uvSurfaces[key];
+    if (!uv) continue;
+
+    // UV coordinates to pixel coordinates (V is flipped: 0=bottom, 1=top)
+    const px = Math.round(uv.minU * tw);
+    const py = Math.round((1 - uv.maxV) * th);
+    const pw = Math.round((uv.maxU - uv.minU) * tw);
+    const ph = Math.round((uv.maxV - uv.minV) * th);
+
+    // Render surface to a temp canvas at its UV region size
+    const tmp = document.createElement("canvas");
+    const tmpS = { ...s, w: pw, h: ph };
+    renderToCanvas(tmp, tmpS);
+
+    // Draw into the cross template
+    ctx.drawImage(tmp, px, py, pw, ph);
+  }
+}
+
 // ── Drawing ──
 function drawGrid(ctx, p) {
   const { width: w, height: h, cols, rows, lineColor, lineWidth, cellSize, centerSize, checkerOpacity, circles, colorbar, invert, credits } = p;
@@ -460,13 +556,13 @@ function drawPM5544(ctx, p) {
   for (let y = Math.floor(yellowTop); y <= cy + R; y++) {
     const dy = y - cy;
     const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
-    ctx.fillStyle = "#d8d800";
+    ctx.fillStyle = "#ffff00";
     ctx.fillRect(cx - hw, y, hw * 2, 1);
   }
   // Red block in yellow crescent
   const redW = R * 0.14, redH = R * 0.14;
   const redY = yellowTop + (cy + R - yellowTop) * 0.2;
-  ctx.fillStyle = "#d00000";
+  ctx.fillStyle = "#ff0000";
   ctx.fillRect(cx - redW / 2, redY, redW, redH);
 
   // ── 7. Castellation bars ──
@@ -477,7 +573,7 @@ function drawPM5544(ctx, p) {
   const castBars = 16;
   const castBarW = innerW / castBars;
   for (let i = 0; i < castBars; i++) {
-    ctx.fillStyle = i % 2 === 0 ? "#c0c0c0" : "#000000";
+    ctx.fillStyle = i % 2 === 0 ? "#ffffff" : "#000000";
     ctx.fillRect(cx - innerW / 2 + i * castBarW, castY0, castBarW, castH);
   }
   // White side patches next to castellation
@@ -489,14 +585,12 @@ function drawPM5544(ctx, p) {
   // ── 8. Color bars ──
   const cbY0 = castY0 + castH;
   const cbH = R * 0.24;
-  const barColors = ["#c8c800", "#00c8c8", "#00c800", "#c800c8", "#c80000", "#0000c8"];
+  const barColors = ["#ffff00", "#00ffff", "#00ff00", "#ff00ff", "#ff0000", "#0000ff"];
   const cbTotalW = innerW;
   const segW = cbTotalW / barColors.length;
-  // Black separator between each bar
-  const sepW = Math.max(1, lw);
   barColors.forEach((c, i) => {
     ctx.fillStyle = c;
-    ctx.fillRect(cx - cbTotalW / 2 + i * segW + sepW / 2, cbY0, segW - sepW, cbH);
+    ctx.fillRect(cx - cbTotalW / 2 + i * segW, cbY0, segW, cbH);
   });
   // Black center column (between green and magenta, slightly wider)
   ctx.fillStyle = "#000";
