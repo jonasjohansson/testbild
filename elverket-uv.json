@@ -10,12 +10,12 @@
       "rows": 8,
       "color": "#ff0000",
       "crossUV": {
-        "minU": 0,
-        "maxU": 0.1595,
-        "minV": 0.2991,
+        "minU": 0.8405,
+        "maxU": 1.0,
+        "minV": 0.299,
         "maxV": 0.7009
       },
-      "rotation": 270,
+      "rotation": 90,
       "ushapeUV": {
         "minU": 0.3805,
         "maxU": 0.6195,
@@ -31,12 +31,12 @@
       "rows": 8,
       "color": "#00ff00",
       "crossUV": {
-        "minU": 0.8405,
-        "maxU": 1.0,
-        "minV": 0.299,
+        "minU": 0,
+        "maxU": 0.1595,
+        "minV": 0.2991,
         "maxV": 0.7009
       },
-      "rotation": 90,
+      "rotation": 270,
       "ushapeUV": {
         "minU": 0.3807,
         "maxU": 0.6198,
