@@ -20,11 +20,11 @@ const CROSS_LAYOUTS = {
   elverket: {
     width: 6004, height: 3201,
     surfaces: {
-      WALL_FRONT: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 },
-      WALL_REAR:  { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 },
-      WALL_LEFT:  { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 },
-      WALL_RIGHT: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 },
-      FLOOR:      { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 },
+      WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 90 },
+      WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 90 },
+      WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0 },
+      WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0 },
+      FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0 },
     },
   },
 };
@@ -264,7 +264,10 @@ gui.add({ uploadUV() {
         crossLayout = { width: data.textureWidth || 4096, height: data.textureHeight || 4096, surfaces: {} };
         for (const [name, info] of Object.entries(data.surfaces || {})) {
           const key = name.replace(/_/g, " ").toUpperCase().replace(/ /g, "_");
-          crossLayout.surfaces[key] = info.uv || info;
+          crossLayout.surfaces[key] = {
+            uv: info.uv || info,
+            rotation: info.rotation || 0,
+          };
         }
         alert(`UV layout loaded: ${Object.keys(crossLayout.surfaces).length} surfaces, ${crossLayout.width}x${crossLayout.height}`);
       } catch (err) { alert("Failed to parse UV JSON: " + err.message); }
@@ -292,31 +295,45 @@ function renderCrossTemplate(c, layout) {
 
   for (const s of surfaces) {
     const key = s.name.replace(/\s+/g, "_").toUpperCase();
-    const uv = uvSurfaces[key];
-    if (!uv) continue;
+    const entry = uvSurfaces[key];
+    if (!entry) continue;
+
+    // Support both flat format { minU, ... } and nested { uv: { minU, ... }, rotation }
+    const uv = entry.uv || entry;
+    const rotation = entry.rotation || 0;
 
     const px = Math.round(uv.minU * tw);
     const py = Math.round((1 - uv.maxV) * th);
     const pw = Math.round((uv.maxU - uv.minU) * tw);
     const ph = Math.round((uv.maxV - uv.minV) * th);
 
-    // Check if surface needs rotation: UV region aspect is inverted vs surface aspect
-    const uvAspect = pw / ph;
-    const surfAspect = s.cols / s.rows;
-    const needsRotation = (uvAspect < 1 && surfAspect > 1) || (uvAspect > 1 && surfAspect < 1);
-
     const tmp = document.createElement("canvas");
-    if (needsRotation) {
-      // Render at swapped dimensions then rotate 90° CCW into the UV slot
+    const rad = rotation * Math.PI / 180;
+
+    if (rotation === 90) {
+      renderToCanvas(tmp, { ...s, w: ph, h: pw });
+      ctx.save();
+      ctx.translate(px + pw, py);
+      ctx.rotate(rad);
+      ctx.drawImage(tmp, 0, 0);
+      ctx.restore();
+    } else if (rotation === 270 || rotation === -90) {
       renderToCanvas(tmp, { ...s, w: ph, h: pw });
       ctx.save();
       ctx.translate(px, py + ph);
-      ctx.rotate(-Math.PI / 2);
-      ctx.drawImage(tmp, 0, 0, ph, pw);
+      ctx.rotate(rad);
+      ctx.drawImage(tmp, 0, 0);
+      ctx.restore();
+    } else if (rotation === 180) {
+      renderToCanvas(tmp, { ...s, w: pw, h: ph });
+      ctx.save();
+      ctx.translate(px + pw, py + ph);
+      ctx.rotate(rad);
+      ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else {
       renderToCanvas(tmp, { ...s, w: pw, h: ph });
-      ctx.drawImage(tmp, px, py, pw, ph);
+      ctx.drawImage(tmp, px, py);
     }
   }
 }

@@ -8,7 +8,8 @@
         "maxU": 1.0,
         "minV": 0.299,
         "maxV": 0.7009
-      }
+      },
+      "rotation": 90
     },
     "Wall_Rear": {
       "uv": {
@@ -16,7 +17,8 @@
         "maxU": 0.1595,
         "minV": 0.2991,
         "maxV": 0.7009
-      }
+      },
+      "rotation": 90
     },
     "Wall_Left": {
       "uv": {
@@ -24,7 +26,8 @@
         "maxU": 0.841,
         "minV": 0.7008,
         "maxV": 1.0
-      }
+      },
+      "rotation": 0
     },
     "Wall_Right": {
       "uv": {
@@ -32,7 +35,8 @@
         "maxU": 0.8405,
         "minV": -0.0,
         "maxV": 0.2992
-      }
+      },
+      "rotation": 0
     },
     "Floor": {
       "uv": {
@@ -40,7 +44,8 @@
         "maxU": 0.8405,
         "minV": 0.299,
         "maxV": 0.7009
-      }
+      },
+      "rotation": 0
     }
   }
 }
