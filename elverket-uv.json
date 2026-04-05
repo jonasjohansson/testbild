@@ -82,9 +82,9 @@
         "minU": 0.1595,
         "maxU": 0.8405,
         "minV": 0.7008,
-        "maxV": 1.0
+        "maxV": 1
       },
-      "rotation": 180,
+      "rotation": 0,
       "ushapeUV": {
         "minU": 0,
         "maxU": 0.3778,
