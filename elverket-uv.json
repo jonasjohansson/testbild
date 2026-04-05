@@ -54,8 +54,8 @@
       "crossUV": {
         "minU": 0.1594,
         "maxU": 0.841,
-        "minV": 0.7008,
-        "maxV": 1.0
+        "minV": 0.0,
+        "maxV": 0.2992
       },
       "rotation": 0,
       "ushapeUV": {
@@ -75,8 +75,8 @@
       "crossUV": {
         "minU": 0.1595,
         "maxU": 0.8405,
-        "minV": 0,
-        "maxV": 0.2992
+        "minV": 0.7008,
+        "maxV": 1.0
       },
       "rotation": 0,
       "ushapeUV": {
