@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testcard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #eee; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+
+    .app { display: flex; height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 320px; background: #1a1a1a; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; padding: 16px; }
+    .sidebar h1 { font-size: 16px; margin-bottom: 16px; font-weight: 600; letter-spacing: 0.5px; }
+    .sidebar h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; margin: 16px 0 8px; }
+
+    .field { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .field label { width: 80px; font-size: 12px; color: #888; flex-shrink: 0; }
+    .field input, .field select { background: #222; border: 1px solid #444; color: #eee; padding: 4px 8px; border-radius: 4px; font-family: inherit; font-size: 12px; flex: 1; }
+    .field input[type="number"] { width: 60px; flex: 0; }
+    .field input[type="color"] { width: 32px; height: 24px; padding: 0; border: none; cursor: pointer; flex: 0; }
+
+    button { background: #333; border: 1px solid #555; color: #eee; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; }
+    button:hover { background: #444; }
+    button.primary { background: #2a6; border-color: #3b7; }
+    button.primary:hover { background: #3b7; }
+
+    .surface-list { list-style: none; }
+    .surface-item { background: #222; border: 1px solid #333; border-radius: 4px; padding: 8px; margin-bottom: 6px; cursor: pointer; }
+    .surface-item.active { border-color: #2a6; }
+    .surface-item .name { font-weight: 600; }
+    .surface-item .dims { font-size: 11px; color: #666; }
+
+    .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+    /* ── Canvas area ── */
+    .preview { flex: 1; display: flex; align-items: center; justify-content: center; background: #0a0a0a; padding: 20px; overflow: hidden; }
+    .preview canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; background: #000; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar">
+      <h1>Testcard</h1>
+
+      <h2>Surfaces</h2>
+      <ul class="surface-list" id="surfaceList"></ul>
+      <button id="addSurface" style="width:100%; margin-top: 4px;">+ Add Surface</button>
+
+      <h2>Settings</h2>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="surfaceName" value="WALL FRONT">
+      </div>
+      <div class="field">
+        <label>Width</label>
+        <input type="number" id="surfaceW" value="1920" min="64" step="1">
+        <label style="width:auto">x</label>
+        <input type="number" id="surfaceH" value="1080" min="64" step="1">
+      </div>
+      <div class="field">
+        <label>Columns</label>
+        <input type="number" id="gridCols" value="11" min="1" max="100">
+      </div>
+      <div class="field">
+        <label>Rows</label>
+        <input type="number" id="gridRows" value="8" min="1" max="100">
+      </div>
+      <div class="field">
+        <label>Pattern</label>
+        <select id="pattern">
+          <option value="grid">Numbered Grid</option>
+          <option value="smpte">SMPTE Bars</option>
+          <option value="gradient">Gradient</option>
+          <option value="white">Solid White</option>
+          <option value="red">Solid Red</option>
+          <option value="green">Solid Green</option>
+          <option value="blue">Solid Blue</option>
+          <option value="checker">Checkerboard</option>
+          <option value="crosshatch">Crosshatch</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Line Color</label>
+        <input type="color" id="lineColor" value="#cc0000">
+      </div>
+      <div class="field">
+        <label>Info</label>
+        <input type="text" id="surfaceInfo" value="" placeholder="e.g. 11m x 8m">
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="generate">Generate</button>
+        <button id="exportPng">Export PNG</button>
+        <button id="exportAll">Export All</button>
+      </div>
+    </div>
+
+    <div class="preview">
+      <canvas id="canvas" width="1920" height="1080"></canvas>
+    </div>
+  </div>
+
+  <script src="testcard.js"></script>
+</body>
+</html>
