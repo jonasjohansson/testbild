@@ -279,8 +279,8 @@ function loadFromUVJSON(data) {
       };
     }
 
-    // Add to ushape layout
-    if (info.ushapeUV) {
+    // Add to ushape layout (skip mirrors)
+    if (info.ushapeUV && !info.ushapeMirrorOf) {
       ushapeSurfaces[key] = {
         uv: info.ushapeUV,
         rotation: info.ushapeRotation || 0,
