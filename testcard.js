@@ -20,8 +20,8 @@ const CROSS_LAYOUTS = {
   elverket: {
     width: 6004, height: 3201,
     surfaces: {
-      WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 90 },
-      WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 90 },
+      WALL_FRONT: { uv: { minU: 0.8405, maxU: 1.0, minV: 0.299, maxV: 0.7009 }, rotation: 270 },
+      WALL_REAR:  { uv: { minU: 0.0, maxU: 0.1595, minV: 0.2991, maxV: 0.7009 }, rotation: 270 },
       WALL_LEFT:  { uv: { minU: 0.1594, maxU: 0.841, minV: 0.7008, maxV: 1.0 }, rotation: 0 },
       WALL_RIGHT: { uv: { minU: 0.1595, maxU: 0.8405, minV: 0.0, maxV: 0.2992 }, rotation: 0 },
       FLOOR:      { uv: { minU: 0.1594, maxU: 0.8405, minV: 0.299, maxV: 0.7009 }, rotation: 0 },

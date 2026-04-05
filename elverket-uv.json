@@ -9,7 +9,7 @@
         "minV": 0.299,
         "maxV": 0.7009
       },
-      "rotation": 90
+      "rotation": 270
     },
     "Wall_Rear": {
       "uv": {
@@ -18,7 +18,7 @@
         "minV": 0.2991,
         "maxV": 0.7009
       },
-      "rotation": 90
+      "rotation": 270
     },
     "Wall_Left": {
       "uv": {
