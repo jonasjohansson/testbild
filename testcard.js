@@ -46,7 +46,6 @@ const global = {
   checkerOpacity: 0.08,
   circles: false,
   cross: false,
-  colorbar: false,
   invert: false,
   credits: "\u00A9 Jonas Johansson",
 };
@@ -174,7 +173,6 @@ globalFolder.add(global, "centerSize", 0.5, 3.0, 0.1).name("Center Size").onChan
 globalFolder.add(global, "checkerOpacity", 0, 0.5, 0.01).name("Checker").onChange(render);
 globalFolder.add(global, "circles").name("Circles").onChange(render);
 globalFolder.add(global, "cross").name("Cross").onChange(render);
-globalFolder.add(global, "colorbar").name("Color Bar").onChange(render);
 globalFolder.add(global, "invert").name("Invert").onChange(render);
 globalFolder.add(global, "credits").name("Credits").onFinishChange(render);
 
@@ -291,23 +289,41 @@ function renderCrossTemplate(c, layout) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, tw, th);
+
   for (const s of surfaces) {
     const key = s.name.replace(/\s+/g, "_").toUpperCase();
     const uv = uvSurfaces[key];
     if (!uv) continue;
+
     const px = Math.round(uv.minU * tw);
     const py = Math.round((1 - uv.maxV) * th);
     const pw = Math.round((uv.maxU - uv.minU) * tw);
     const ph = Math.round((uv.maxV - uv.minV) * th);
+
+    // Check if surface needs rotation: UV region aspect is inverted vs surface aspect
+    const uvAspect = pw / ph;
+    const surfAspect = s.cols / s.rows;
+    const needsRotation = (uvAspect < 1 && surfAspect > 1) || (uvAspect > 1 && surfAspect < 1);
+
     const tmp = document.createElement("canvas");
-    renderToCanvas(tmp, { ...s, w: pw, h: ph });
-    ctx.drawImage(tmp, px, py, pw, ph);
+    if (needsRotation) {
+      // Render at swapped dimensions then rotate 90° CCW into the UV slot
+      renderToCanvas(tmp, { ...s, w: ph, h: pw });
+      ctx.save();
+      ctx.translate(px, py + ph);
+      ctx.rotate(-Math.PI / 2);
+      ctx.drawImage(tmp, 0, 0, ph, pw);
+      ctx.restore();
+    } else {
+      renderToCanvas(tmp, { ...s, w: pw, h: ph });
+      ctx.drawImage(tmp, px, py, pw, ph);
+    }
   }
 }
 
 // ── Drawing ──
 function drawGrid(ctx, p) {
-  const { width: w, height: h, cols, rows, lineColor, lineWidth, cellSize, centerSize, checkerOpacity, circles, colorbar, invert } = p;
+  const { width: w, height: h, cols, rows, lineColor, lineWidth, cellSize, centerSize, checkerOpacity, circles, invert } = p;
   const cellW = w / cols, cellH = h / rows;
   const fontSize = Math.max(8, Math.min(cellW, cellH) / 5);
   const bg = invert ? "#ffffff" : "#000000";
@@ -363,15 +379,6 @@ function drawGrid(ctx, p) {
     ctx.beginPath(); ctx.arc(cx, cy, lw * 2, 0, Math.PI * 2); ctx.fill();
   }
 
-  if (colorbar) {
-    const barColors = ["#ffffff", "#ffff00", "#00ffff", "#00ff00", "#ff00ff", "#ff0000", "#0000ff", "#000000"];
-    const barW = Math.min(w * 0.4, cellW * Math.min(cols, 8));
-    const barH = cellH * 0.6;
-    const bx = (w - barW) / 2;
-    const by = h / 2 + Math.min(w, h) * 0.12;
-    const segW = barW / barColors.length;
-    barColors.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(bx + i * segW, by, segW, barH); });
-  }
 
   drawCenterText(ctx, w, h, fontSize * centerSize, fg, bg, p);
 }
