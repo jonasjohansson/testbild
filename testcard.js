@@ -7,7 +7,7 @@ const FONT = "'SF Mono', 'Fira Code', monospace";
 const DEFAULT_SURFACE = { name: "SCREEN", w: 1920, h: 1080, cols: 16, rows: 9, color: "#ff0000" };
 
 let pixelMapLayout = null;
-let ushapeLayout = null;
+let panoramaLayout = null;
 
 // ── State ──
 const surfaces = [];
@@ -24,6 +24,7 @@ const global = {
   circles: false,
   cross: false,
   invert: false,
+  transparent: false,
   credits: "\u00A9 Jonas Johansson",
 };
 
@@ -92,8 +93,8 @@ function renderToCanvas(c, s, opts = {}) {
 }
 
 function render() {
-  if (viewPixelMapMode === "ushape" && ushapeLayout) {
-    renderPixelMap(canvas, ushapeLayout); return;
+  if (viewPixelMapMode === "panorama" && panoramaLayout) {
+    renderPixelMap(canvas, panoramaLayout); return;
   }
   if (viewPixelMapMode) {
     const layout = getPixelMapLayout();
@@ -143,6 +144,7 @@ globalFolder.add(global, "checkerOpacity", 0, 0.5, 0.01).name("Checker").onChang
 globalFolder.add(global, "circles").name("Circles").onChange(render);
 globalFolder.add(global, "cross").name("Cross").onChange(render);
 globalFolder.add(global, "invert").name("Invert").onChange(render);
+globalFolder.add(global, "transparent").name("Transparent BG").onChange(render);
 globalFolder.add(global, "credits").name("Credits").onFinishChange(render);
 
 // Export
@@ -162,18 +164,39 @@ function downloadCanvas(c, filename) {
 
 gui.add({ exportPNG() {
   const c = document.createElement("canvas");
-  renderToCanvas(c, surfaces[activeIdx], { transparent: true });
+  renderToCanvas(c, surfaces[activeIdx]);
   downloadCanvas(c, `${surfaces[activeIdx].name.replace(/\s+/g, "_")}.png`);
 }}, "exportPNG").name("Export PNG");
 
 gui.add({ exportZip() {
   try {
     const zip = new window.JSZip();
-    let pending = surfaces.length;
+
+    // Collect all canvases to export: individual surfaces + composite layouts
+    const jobs = [];
     surfaces.forEach((s) => {
       const c = document.createElement("canvas");
-      renderToCanvas(c, s, { transparent: true });
-      const filename = `${s.name.replace(/\s+/g, "_")}.png`;
+      renderToCanvas(c, s);
+      jobs.push({ canvas: c, filename: `${s.name.replace(/\s+/g, "_")}.png` });
+    });
+
+    // Include CROSS (pixel map) if available
+    const crossLayout = getPixelMapLayout();
+    if (crossLayout && Object.keys(crossLayout.surfaces).length) {
+      const c = document.createElement("canvas");
+      renderPixelMap(c, crossLayout, { transparent: global.transparent });
+      jobs.push({ canvas: c, filename: "CROSS.png" });
+    }
+
+    // Include PANORAMA if available
+    if (panoramaLayout && Object.keys(panoramaLayout.surfaces).length) {
+      const c = document.createElement("canvas");
+      renderPixelMap(c, panoramaLayout, { transparent: global.transparent });
+      jobs.push({ canvas: c, filename: "PANORAMA.png" });
+    }
+
+    let pending = jobs.length;
+    jobs.forEach(({ canvas: c, filename }) => {
       c.toBlob((blob) => {
         if (blob) { zip.file(filename, blob); }
         else {
@@ -204,33 +227,47 @@ gui.add({ exportZip() {
   }
 }}, "exportZip").name("Export All as ZIP");
 
-gui.add({ viewPixelMap() {
+// UV-dependent buttons — hidden until a UV JSON is uploaded
+const uvActions = [];
+
+uvActions.push(gui.add({ viewPixelMap() {
   const layout = getPixelMapLayout();
-  if (!layout) { alert("No pixel map layout available. Upload a UV JSON first."); return; }
+  if (!layout) return;
   viewPixelMapMode = true;
   render();
-}}, "viewPixelMap").name("View Pixel Map");
+}}, "viewPixelMap").name("View Pixel Map"));
 
-gui.add({ exportPixelMap() {
+uvActions.push(gui.add({ exportPixelMap() {
   const layout = getPixelMapLayout();
-  if (!layout) { alert("No pixel map layout available. Upload a UV JSON first."); return; }
+  if (!layout) return;
   const c = document.createElement("canvas");
-  renderPixelMap(c, layout, { transparent: true });
-  downloadCanvas(c, "pixel_map.png");
-}}, "exportPixelMap").name("Export Pixel Map");
+  renderPixelMap(c, layout, { transparent: global.transparent });
+  downloadCanvas(c, "CROSS.png");
+}}, "exportPixelMap").name("Export Pixel Map"));
 
-gui.add({ viewPanorama() {
-  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No Panorama layout. Upload a UV JSON first."); return; }
-  viewPixelMapMode = "ushape";
+uvActions.push(gui.add({ viewPanorama() {
+  if (!panoramaLayout || !Object.keys(panoramaLayout.surfaces).length) return;
+  viewPixelMapMode = "panorama";
   render();
-}}, "viewPanorama").name("View Panorama");
+}}, "viewPanorama").name("View Panorama"));
 
-gui.add({ exportPanorama() {
-  if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No Panorama layout. Upload a UV JSON first."); return; }
+uvActions.push(gui.add({ exportPanorama() {
+  if (!panoramaLayout || !Object.keys(panoramaLayout.surfaces).length) return;
   const c = document.createElement("canvas");
-  renderPixelMap(c, ushapeLayout, { transparent: true });
-  downloadCanvas(c, "panorama_template.png");
-}}, "exportPanorama").name("Export Panorama");
+  renderPixelMap(c, panoramaLayout, { transparent: global.transparent });
+  downloadCanvas(c, "PANORAMA.png");
+}}, "exportPanorama").name("Export Panorama"));
+
+// Hide UV actions until JSON is loaded
+uvActions.forEach(c => c.hide());
+
+function showUVActions() {
+  uvActions.forEach(c => c.show());
+}
+
+gui.add({ blenderScript() {
+  window.open("export_uv_json.py", "_blank");
+}}, "blenderScript").name("Blender Export Script");
 
 gui.add({ uploadUV() {
   const input = document.createElement("input");
@@ -255,7 +292,7 @@ function loadFromUVJSON(data) {
   // Build surfaces list from JSON
   surfaces.length = 0;
   const pixelMapSurfaces = {};
-  const ushapeSurfaces = {};
+  const panoramaSurfaces = {};
 
   for (const [name, info] of Object.entries(data.surfaces || {})) {
     const displayName = name.replace(/_/g, " ").toUpperCase();
@@ -280,13 +317,15 @@ function loadFromUVJSON(data) {
       };
     }
 
-    // Add to ushape layout (skip mirrors)
-    if (info.ushapeUV && !info.ushapeMirrorOf) {
-      ushapeSurfaces[key] = {
-        uv: info.ushapeUV,
-        rotation: info.ushapeRotation || 0,
-        cols: info.ushapeCols,
-        rows: info.ushapeRows,
+    // Add to panorama layout (skip mirrors) — supports both old (ushape*) and new (panorama*) field names
+    const pUV = info.panoramaUV || info.ushapeUV;
+    const pMirror = info.panoramaMirrorOf || info.ushapeMirrorOf;
+    if (pUV && !pMirror) {
+      panoramaSurfaces[key] = {
+        uv: pUV,
+        rotation: info.panoramaRotation || info.ushapeRotation || 0,
+        cols: info.panoramaCols || info.ushapeCols,
+        rows: info.panoramaRows || info.ushapeRows,
       };
     }
   }
@@ -298,11 +337,11 @@ function loadFromUVJSON(data) {
     surfaces: pixelMapSurfaces,
   };
 
-  // Set ushape layout
-  ushapeLayout = {
-    width: data.ushapeTextureWidth || 8192,
-    height: data.ushapeTextureHeight || 960,
-    surfaces: ushapeSurfaces,
+  // Set panorama layout — supports both old (ushape*) and new (panorama*) field names
+  panoramaLayout = {
+    width: data.panoramaTextureWidth || data.ushapeTextureWidth || 8192,
+    height: data.panoramaTextureHeight || data.ushapeTextureHeight || 960,
+    surfaces: panoramaSurfaces,
   };
 
   activeIdx = 0;
@@ -312,6 +351,7 @@ function loadFromUVJSON(data) {
   render();
 
   const n = surfaces.length;
+  showUVActions();
   console.log(`Loaded ${n} surfaces from UV JSON`);
 }
 
