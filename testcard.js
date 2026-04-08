@@ -80,8 +80,9 @@ function buildParams(s) {
   return { name: s.name, width: s.w, height: s.h, cols: s.cols, rows: s.rows, lineColor: s.color || "#ff0000", ...global };
 }
 
-function renderToCanvas(c, s) {
+function renderToCanvas(c, s, opts = {}) {
   const p = buildParams(s);
+  if (opts.transparent) p.transparent = true;
   c.width = s.w;
   c.height = s.h;
   const ctx = c.getContext("2d");
@@ -161,7 +162,7 @@ function downloadCanvas(c, filename) {
 
 gui.add({ exportPNG() {
   const c = document.createElement("canvas");
-  renderToCanvas(c, surfaces[activeIdx]);
+  renderToCanvas(c, surfaces[activeIdx], { transparent: true });
   downloadCanvas(c, `${surfaces[activeIdx].name.replace(/\s+/g, "_")}.png`);
 }}, "exportPNG").name("Export PNG");
 
@@ -171,7 +172,7 @@ gui.add({ exportZip() {
     let pending = surfaces.length;
     surfaces.forEach((s) => {
       const c = document.createElement("canvas");
-      renderToCanvas(c, s);
+      renderToCanvas(c, s, { transparent: true });
       const filename = `${s.name.replace(/\s+/g, "_")}.png`;
       c.toBlob((blob) => {
         if (blob) { zip.file(filename, blob); }
@@ -214,7 +215,7 @@ gui.add({ exportPixelMap() {
   const layout = getPixelMapLayout();
   if (!layout) { alert("No pixel map layout available. Upload a UV JSON first."); return; }
   const c = document.createElement("canvas");
-  renderPixelMap(c, layout);
+  renderPixelMap(c, layout, { transparent: true });
   downloadCanvas(c, "pixel_map.png");
 }}, "exportPixelMap").name("Export Pixel Map");
 
@@ -227,7 +228,7 @@ gui.add({ viewPanorama() {
 gui.add({ exportPanorama() {
   if (!ushapeLayout || !Object.keys(ushapeLayout.surfaces).length) { alert("No Panorama layout. Upload a UV JSON first."); return; }
   const c = document.createElement("canvas");
-  renderPixelMap(c, ushapeLayout);
+  renderPixelMap(c, ushapeLayout, { transparent: true });
   downloadCanvas(c, "panorama_template.png");
 }}, "exportPanorama").name("Export Panorama");
 
@@ -318,13 +319,15 @@ function getPixelMapLayout() {
   return pixelMapLayout || null;
 }
 
-function renderPixelMap(c, layout) {
+function renderPixelMap(c, layout, opts = {}) {
   const { width: tw, height: th, surfaces: uvSurfaces } = layout;
   c.width = tw;
   c.height = th;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, tw, th);
+  if (!opts.transparent) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, tw, th);
+  }
 
   for (const s of surfaces) {
     const key = s.name.replace(/\s+/g, "_").toUpperCase();
@@ -349,7 +352,7 @@ function renderPixelMap(c, layout) {
     const rad = rotation * Math.PI / 180;
 
     if (rotation === 90) {
-      renderToCanvas(tmp, { ...surfOverride, w: ph, h: pw });
+      renderToCanvas(tmp, { ...surfOverride, w: ph, h: pw }, opts);
       ctx.save();
       ctx.translate(px + pw, py);
       ctx.rotate(rad);
@@ -357,7 +360,7 @@ function renderPixelMap(c, layout) {
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else if (rotation === 270 || rotation === -90) {
-      renderToCanvas(tmp, { ...surfOverride, w: ph, h: pw });
+      renderToCanvas(tmp, { ...surfOverride, w: ph, h: pw }, opts);
       ctx.save();
       ctx.translate(px, py + ph);
       ctx.rotate(rad);
@@ -365,14 +368,14 @@ function renderPixelMap(c, layout) {
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else if (rotation === 180) {
-      renderToCanvas(tmp, { ...surfOverride, w: pw, h: ph });
+      renderToCanvas(tmp, { ...surfOverride, w: pw, h: ph }, opts);
       ctx.save();
       ctx.translate(px + pw, py + ph);
       ctx.rotate(rad);
       ctx.drawImage(tmp, 0, 0);
       ctx.restore();
     } else {
-      renderToCanvas(tmp, { ...surfOverride, w: pw, h: ph });
+      renderToCanvas(tmp, { ...surfOverride, w: pw, h: ph }, opts);
       if (flipY) {
         ctx.save();
         ctx.translate(px, py + ph);
@@ -394,8 +397,10 @@ function drawGrid(ctx, p) {
   const bg = invert ? "#ffffff" : "#000000";
   const fg = invert ? "#000000" : lineColor;
 
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, w, h);
+  if (!p.transparent) {
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+  }
 
   if (checkerOpacity > 0) {
     ctx.fillStyle = alphaColor(fg, checkerOpacity);
@@ -450,8 +455,10 @@ function drawGrid(ctx, p) {
 
 function drawSMPTE(ctx, p) {
   const { width: w, height: h, invert } = p;
-  ctx.fillStyle = invert ? "#fff" : "#000";
-  ctx.fillRect(0, 0, w, h);
+  if (!p.transparent) {
+    ctx.fillStyle = invert ? "#fff" : "#000";
+    ctx.fillRect(0, 0, w, h);
+  }
   const barH = Math.floor(h * 2 / 3);
   const colors = ["#c0c0c0", "#c0c000", "#00c0c0", "#00c000", "#c000c0", "#c00000", "#0000c0"];
   colors.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(i * w / colors.length, 0, w / colors.length, barH); });
