@@ -1,119 +1,117 @@
 {
   "name": "elverket",
-  "crossTextureWidth": 12000,
-  "crossTextureHeight": 6559,
-  "panoramaTextureWidth": 10879,
-  "panoramaTextureHeight": 4639,
+  "allTextureWidth": 11981,
+  "allTextureHeight": 6765,
+  "panoramaTextureWidth": 10799,
+  "panoramaTextureHeight": 4697,
   "surfaces": {
-    "Wall_Front": {
-      "w": 2719,
-      "h": 1920,
-      "cols": 11,
-      "rows": 8,
-      "color": "#00ff00",
-      "crossUV": {
-        "minU": 0,
-        "maxU": 0.16,
-        "minV": 0.2927,
-        "maxV": 0.7073
-      },
-      "rotation": 270,
-      "panoramaUV": {
-        "minU": 0.375,
-        "maxU": 0.625,
-        "minV": 0.5862,
-        "maxV": 1
-      },
-      "panoramaRotation": 0,
-      "panoramaCols": 11
-    },
-    "Wall_Rear": {
-      "w": 2719,
-      "h": 1920,
-      "cols": 11,
-      "rows": 8,
-      "color": "#ff0000",
-      "crossUV": {
-        "minU": 0.84,
-        "maxU": 1,
-        "minV": 0.2927,
-        "maxV": 0.7073
-      },
-      "rotation": 90,
-      "panoramaUV": {
-        "minU": 0.375,
-        "maxU": 0.625,
-        "minV": 0.5862,
-        "maxV": 1
-      },
-      "panoramaRotation": 0,
-      "panoramaCols": 11,
-      "panoramaMirrorOf": "Wall_Front"
-    },
-    "Wall_Left": {
-      "w": 8160,
-      "h": 1920,
-      "cols": 34,
-      "rows": 8,
-      "color": "#00ffff",
-      "crossUV": {
-        "minU": 0.16,
-        "maxU": 0.84,
-        "minV": 0,
-        "maxV": 0.2927
-      },
-      "rotation": 0,
-      "panoramaUV": {
-        "minU": 0.625,
-        "maxU": 1,
-        "minV": 0.5862,
-        "maxV": 1
-      },
-      "panoramaRotation": 0,
-      "panoramaCols": 17
-    },
-    "Wall_Right": {
-      "w": 8160,
-      "h": 1920,
-      "cols": 34,
-      "rows": 8,
-      "color": "#ffff00",
-      "crossUV": {
-        "minU": 0.16,
-        "maxU": 0.84,
-        "minV": 0.7073,
-        "maxV": 1
-      },
-      "rotation": 0,
-      "panoramaUV": {
-        "minU": 0,
-        "maxU": 0.375,
-        "minV": 0.5862,
-        "maxV": 1
-      },
-      "panoramaRotation": 0,
-      "panoramaCols": 17
-    },
     "Floor": {
       "w": 8160,
       "h": 2719,
       "cols": 34,
       "rows": 11,
-      "color": "#ff00ff",
-      "crossUV": {
-        "minU": 0.16,
-        "maxU": 0.84,
-        "minV": 0.2927,
-        "maxV": 0.7073
+      "color": "#00ff00",
+      "allUV": {
+        "minU": 0.1595,
+        "maxU": 0.8406,
+        "minV": 0.2991,
+        "maxV": 0.701
       },
       "rotation": 0,
       "panoramaUV": {
-        "minU": 0.125,
-        "maxU": 0.875,
-        "minV": 0,
-        "maxV": 0.5862
+        "minU": 0.1222,
+        "maxU": 0.8778,
+        "minV": 0.0,
+        "maxV": 0.5789
       },
       "panoramaRotation": 0
+    },
+    "Front_LongWallA": {
+      "w": 8160,
+      "h": 1920,
+      "cols": 34,
+      "rows": 8,
+      "color": "#ff0000",
+      "allUV": {
+        "minU": 0.1594,
+        "maxU": 0.841,
+        "minV": 0.0,
+        "maxV": 0.2992
+      },
+      "rotation": 180,
+      "panoramaUV": {
+        "minU": 0.0,
+        "maxU": 0.3778,
+        "minV": 0.5789,
+        "maxV": 1.0
+      },
+      "panoramaRotation": 0,
+      "panoramaCols": 17
+    },
+    "Left_ShortWallC": {
+      "w": 2719,
+      "h": 1920,
+      "cols": 11,
+      "rows": 8,
+      "color": "#00ffff",
+      "allUV": {
+        "minU": 0.0,
+        "maxU": 0.1595,
+        "minV": 0.2991,
+        "maxV": 0.7009
+      },
+      "rotation": 270,
+      "panoramaUV": {
+        "minU": 0.3778,
+        "maxU": 0.6222,
+        "minV": 0.5789,
+        "maxV": 1.0
+      },
+      "panoramaRotation": 0
+    },
+    "Rear_LongWallB": {
+      "w": 8160,
+      "h": 1920,
+      "cols": 34,
+      "rows": 8,
+      "color": "#ffff00",
+      "allUV": {
+        "minU": 0.1595,
+        "maxU": 0.8405,
+        "minV": 0.7008,
+        "maxV": 1.0
+      },
+      "rotation": 0,
+      "panoramaUV": {
+        "minU": 0.6222,
+        "maxU": 1.0,
+        "minV": 0.5789,
+        "maxV": 1.0
+      },
+      "panoramaRotation": 0,
+      "panoramaCols": 17
+    },
+    "Right_ShortWallD": {
+      "w": 2719,
+      "h": 1920,
+      "cols": 11,
+      "rows": 8,
+      "color": "#ff00ff",
+      "allUV": {
+        "minU": 0.8405,
+        "maxU": 1.0,
+        "minV": 0.299,
+        "maxV": 0.7009
+      },
+      "rotation": 90,
+      "panoramaUV": {
+        "minU": 0.3778,
+        "maxU": 0.6222,
+        "minV": 0.5789,
+        "maxV": 1.0
+      },
+      "panoramaRotation": 0,
+      "panoramaMirrorOf": "Left_ShortWallC"
     }
   }
 }

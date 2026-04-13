@@ -89,6 +89,7 @@ function renderToCanvas(c, s, opts = {}) {
   const ctx = c.getContext("2d");
   const patternKey = p.pattern.toLowerCase();
   if (patternKey === "grid") drawGrid(ctx, p);
+  else if (patternKey === "solid") drawSolid(ctx, p);
   else if (patternKey === "smpte") drawSMPTE(ctx, p);
 }
 
@@ -136,7 +137,7 @@ surfaceFolder.add(surface, "rows", 1, 100, 1).name("Rows").onChange(onSurfaceCha
 surfaceFolder.addColor(surface, "lineColor").name("Color").onChange(() => { saveSurface(); render(); });
 
 const globalFolder = gui.addFolder("Global");
-globalFolder.add(global, "pattern", ["Grid", "SMPTE"]).name("Pattern").onChange(render);
+globalFolder.add(global, "pattern", ["Grid", "Solid", "SMPTE"]).name("Pattern").onChange(render);
 globalFolder.add(global, "lineWidth", 0.5, 10, 0.5).name("Line Width").onChange(render);
 globalFolder.add(global, "cellSize", 0.3, 1.5, 0.05).name("Cell Size").onChange(render);
 globalFolder.add(global, "centerSize", 0.5, 3.0, 0.1).name("Center Size").onChange(render);
@@ -165,7 +166,7 @@ function downloadCanvas(c, filename) {
 gui.add({ exportPNG() {
   const c = document.createElement("canvas");
   renderToCanvas(c, surfaces[activeIdx]);
-  downloadCanvas(c, `${surfaces[activeIdx].name.replace(/\s+/g, "_")}.png`);
+  downloadCanvas(c, `${(surfaces[activeIdx].key || surfaces[activeIdx].name).replace(/\s+/g, "_")}.png`);
 }}, "exportPNG").name("Export PNG");
 
 gui.add({ exportZip() {
@@ -177,7 +178,7 @@ gui.add({ exportZip() {
     surfaces.forEach((s) => {
       const c = document.createElement("canvas");
       renderToCanvas(c, s);
-      jobs.push({ canvas: c, filename: `${s.name.replace(/\s+/g, "_")}.png` });
+      jobs.push({ canvas: c, filename: `${(s.key || s.name).replace(/\s+/g, "_")}.png` });
     });
 
     // Include CROSS (pixel map) if available
@@ -185,7 +186,7 @@ gui.add({ exportZip() {
     if (crossLayout && Object.keys(crossLayout.surfaces).length) {
       const c = document.createElement("canvas");
       renderPixelMap(c, crossLayout, { transparent: global.transparent });
-      jobs.push({ canvas: c, filename: "CROSS.png" });
+      jobs.push({ canvas: c, filename: "ALL.png" });
     }
 
     // Include PANORAMA if available
@@ -235,28 +236,28 @@ uvActions.push(gui.add({ viewPixelMap() {
   if (!layout) return;
   viewPixelMapMode = true;
   render();
-}}, "viewPixelMap").name("View Pixel Map"));
+}}, "viewPixelMap").name("View All UV Map"));
 
 uvActions.push(gui.add({ exportPixelMap() {
   const layout = getPixelMapLayout();
   if (!layout) return;
   const c = document.createElement("canvas");
   renderPixelMap(c, layout, { transparent: global.transparent });
-  downloadCanvas(c, "CROSS.png");
-}}, "exportPixelMap").name("Export Pixel Map"));
+  downloadCanvas(c, "ALL.png");
+}}, "exportPixelMap").name("Export All UV Map"));
 
 uvActions.push(gui.add({ viewPanorama() {
   if (!panoramaLayout || !Object.keys(panoramaLayout.surfaces).length) return;
   viewPixelMapMode = "panorama";
   render();
-}}, "viewPanorama").name("View Panorama"));
+}}, "viewPanorama").name("View Panorama UV Map"));
 
 uvActions.push(gui.add({ exportPanorama() {
   if (!panoramaLayout || !Object.keys(panoramaLayout.surfaces).length) return;
   const c = document.createElement("canvas");
   renderPixelMap(c, panoramaLayout, { transparent: global.transparent });
   downloadCanvas(c, "PANORAMA.png");
-}}, "exportPanorama").name("Export Panorama"));
+}}, "exportPanorama").name("Export Panorama UV Map"));
 
 // Hide UV actions until JSON is loaded
 uvActions.forEach(c => c.hide());
@@ -295,12 +296,13 @@ function loadFromUVJSON(data) {
   const panoramaSurfaces = {};
 
   for (const [name, info] of Object.entries(data.surfaces || {})) {
-    const displayName = name.replace(/_/g, " ").toUpperCase();
-    const key = name.replace(/_/g, " ").toUpperCase().replace(/ /g, "_");
+    const displayName = name.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase();
+    const key = name.replace(/\s+/g, "_").toUpperCase();
 
     // Add to surfaces list
     surfaces.push({
       name: displayName,
+      key: key,
       w: info.w || 1920,
       h: info.h || 1080,
       cols: info.cols || 16,
@@ -309,9 +311,9 @@ function loadFromUVJSON(data) {
     });
 
     // Add to pixel map layout
-    if (info.crossUV || info.pixelMapUV || info.uv) {
+    if (info.allUV || info.pixelMapUV || info.uv) {
       pixelMapSurfaces[key] = {
-        uv: info.crossUV || info.pixelMapUV || info.uv,
+        uv: info.allUV || info.pixelMapUV || info.uv,
         rotation: info.rotation || 0,
         flipY: info.flipY || false,
       };
@@ -332,8 +334,8 @@ function loadFromUVJSON(data) {
 
   // Set pixel map layout
   pixelMapLayout = {
-    width: data.pixelMapWidth || data.crossTextureWidth || data.textureWidth || 4096,
-    height: data.pixelMapHeight || data.crossTextureHeight || data.textureHeight || 4096,
+    width: data.pixelMapWidth || data.allTextureWidth || data.textureWidth || 4096,
+    height: data.pixelMapHeight || data.allTextureHeight || data.textureHeight || 4096,
     surfaces: pixelMapSurfaces,
   };
 
@@ -370,8 +372,8 @@ function renderPixelMap(c, layout, opts = {}) {
   }
 
   for (const s of surfaces) {
-    const key = s.name.replace(/\s+/g, "_").toUpperCase();
-    const entry = uvSurfaces[key];
+    const lookupKey = (s.key || s.name.replace(/\s+/g, "_")).toUpperCase();
+    const entry = uvSurfaces[lookupKey];
     if (!entry) continue;
 
     const uv = entry.uv || entry;
@@ -490,7 +492,18 @@ function drawGrid(ctx, p) {
   }
 
 
-  drawCenterText(ctx, w, h, fontSize * centerSize, fg, bg, p);
+  drawCenterText(ctx, w, h, 48 * centerSize, fg, bg, p);
+}
+
+function drawSolid(ctx, p) {
+  const { width: w, height: h, lineColor } = p;
+  const fg = p.invert ? "#000000" : lineColor;
+  ctx.fillStyle = fg;
+  ctx.fillRect(0, 0, w, h);
+  const textColor = "#ffffff";
+  const bgColor = "rgba(0,0,0,0.5)";
+  const fontSize = 48 * p.centerSize;
+  drawCenterText(ctx, w, h, fontSize, textColor, bgColor, p);
 }
 
 function drawSMPTE(ctx, p) {
@@ -507,11 +520,12 @@ function drawSMPTE(ctx, p) {
     ctx.fillStyle = `rgb(${v},${v},${v})`;
     ctx.fillRect(i * w / 10, barH, w / 10, h - barH);
   }
-  drawCenterText(ctx, w, h, Math.max(14, w / 40) * p.centerSize, "#ffffff", "#000000", p);
+  drawCenterText(ctx, w, h, 48 * p.centerSize, "#ffffff", "#000000", p);
 }
 
 function drawCenterText(ctx, w, h, fontSize, textColor, bgColor, p) {
   const { name, cols, rows, credits } = p;
+  const cellW = w / cols, cellH = h / rows;
   const cx = w / 2, cy = h / 2;
   const lineH = fontSize * 1.4;
   const info = `${cols} x ${rows}`;
@@ -520,22 +534,36 @@ function drawCenterText(ctx, w, h, fontSize, textColor, bgColor, p) {
 
   ctx.font = `${fontSize}px ${FONT}`;
   const maxTextW = Math.max(...lines.map((l) => ctx.measureText(l).width));
-  const boxW = maxTextW + fontSize * 4;
-  const boxH = lineH * (lines.length + 1);
+
+  // Snap box to cell grid
+  const contentW = maxTextW + fontSize * 2;
+  const contentH = lineH * (lines.length + 1);
+  const boxCols = Math.ceil(contentW / cellW);
+  const boxRows = Math.ceil(contentH / cellH);
+  const boxW = boxCols * cellW;
+  const boxH = boxRows * cellH;
+
+  // Center the snapped box
+  const startCol = Math.floor((cols - boxCols) / 2);
+  const startRow = Math.floor((rows - boxRows) / 2);
+  const boxX = startCol * cellW;
+  const boxY = startRow * cellH;
 
   ctx.fillStyle = bgColor;
-  ctx.fillRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH);
+  ctx.fillRect(Math.round(boxX), Math.round(boxY), Math.round(boxW), Math.round(boxH));
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  let y = cy - boxH / 2 + lineH;
+  const boxCx = boxX + boxW / 2;
+  const boxCy = boxY + boxH / 2;
+  let y = boxCy - (lines.length - 1) * lineH / 2;
 
   ctx.fillStyle = textColor;
-  ctx.fillText(name, cx, y); y += lineH;
-  ctx.fillText(`${w} x ${h}`, cx, y); y += lineH;
+  ctx.fillText(name, boxCx, y); y += lineH;
+  ctx.fillText(`${w} x ${h}`, boxCx, y); y += lineH;
   ctx.fillStyle = alphaColor(textColor, 0.6);
-  ctx.fillText(info, cx, y); y += lineH;
-  if (credits) { ctx.fillStyle = alphaColor(textColor, 0.4); ctx.fillText(credits, cx, y); }
+  ctx.fillText(info, boxCx, y); y += lineH;
+  if (credits) { ctx.fillStyle = alphaColor(textColor, 0.4); ctx.fillText(credits, boxCx, y); }
 }
 
 // ── Helpers ──

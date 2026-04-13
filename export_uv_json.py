@@ -5,10 +5,10 @@ Exports UV mapping data from a Blender scene for use with the Testbild test patt
 
 Requirements:
   - Mesh objects with materials following the naming convention:
-      SurfaceName_Individual   (per-surface UV, uses "UVMap" layer)
-      SurfaceName_Cross        (cross/plus layout UV, uses "CrossMap" layer)
+      SurfaceName_Individual   (per-surface UV, uses "Individual" layer)
+      SurfaceName_Cross        (all-surfaces layout UV, uses "All" layer)
       SurfaceName_Panorama     (panorama/u-shape UV, uses "Panorama" layer)
-  - Each mesh must have the corresponding UV layers: UVMap, CrossMap, Panorama
+  - Each mesh must have the corresponding UV layers: Individual, All, Panorama
 
 Usage:
   1. Open this script in Blender's Text Editor
@@ -39,20 +39,20 @@ CELL_SIZE = 1.0
 # These override the auto-computed values (PX_PER_METER × mesh size).
 # Set to None or remove a surface to auto-compute from the mesh.
 SURFACE_SPECS = {
-    "Wall_Left":  {"w": 8160, "h": 1920},   # Long Wall A — 34.00m × 8m
-    "Wall_Right": {"w": 8160, "h": 1920},   # Long Wall B — 34.00m × 8m
-    "Wall_Front": {"w": 2719, "h": 1920},   # Short Wall C — 11.32m × 8m
-    "Wall_Rear":  {"w": 2719, "h": 1920},   # Short Wall D — 11.32m × 8m
-    "Floor":      {"w": 8160, "h": 2719},   # Floor — ~34.00m × ~11.33m
+    "Front_LongWallA":  {"w": 8160, "h": 1920},   # Long Wall A — 34.00m × 8m
+    "Rear_LongWallB":   {"w": 8160, "h": 1920},   # Long Wall B — 34.00m × 8m
+    "Left_ShortWallC":  {"w": 2719, "h": 1920},   # Short Wall C — 11.32m × 8m
+    "Right_ShortWallD": {"w": 2719, "h": 1920},   # Short Wall D — 11.32m × 8m
+    "Floor":            {"w": 8160, "h": 2719},   # Floor — ~34.00m × ~11.33m
 }
 
 # UV layer names
-UV_INDIVIDUAL = "UVMap"
-UV_CROSS = "CrossMap"
+UV_INDIVIDUAL = "Individual"
+UV_CROSS = "All"
 UV_PANORAMA = "Panorama"
 
 # Material suffixes to detect
-TEMPLATES = ["Individual", "Cross", "Panorama"]
+TEMPLATES = ["Individual", "All", "Panorama"]
 
 # Surface colors (assigned in discovery order, cycled)
 COLORS = ["#00ff00", "#ff0000", "#00ffff", "#ffff00", "#ff00ff"]
@@ -324,8 +324,8 @@ def main():
     # Build output JSON
     output = {
         "name": PROJECT_NAME,
-        "crossTextureWidth": cross_w,
-        "crossTextureHeight": cross_h,
+        "allTextureWidth": cross_w,
+        "allTextureHeight": cross_h,
         "panoramaTextureWidth": panorama_w,
         "panoramaTextureHeight": panorama_h,
         "surfaces": {},
@@ -345,7 +345,7 @@ def main():
         }
 
         if cross_uv:
-            entry["crossUV"] = cross_uv
+            entry["allUV"] = cross_uv
         if rotation:
             entry["rotation"] = rotation
         else:
