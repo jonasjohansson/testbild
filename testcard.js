@@ -149,6 +149,13 @@ globalFolder.add(global, "transparent").name("Transparent BG").onChange(render);
 globalFolder.add(global, "credits").name("Credits").onFinishChange(render);
 
 // Export
+function exportSuffix() {
+  const parts = [global.pattern];
+  if (global.invert) parts.push("Inverted");
+  if (global.transparent) parts.push("Transparent");
+  return "_" + parts.join("_");
+}
+
 function downloadCanvas(c, filename) {
   c.toBlob((blob) => {
     if (!blob) { console.error("toBlob failed for", filename); return; }
@@ -166,7 +173,7 @@ function downloadCanvas(c, filename) {
 gui.add({ exportPNG() {
   const c = document.createElement("canvas");
   renderToCanvas(c, surfaces[activeIdx]);
-  downloadCanvas(c, `${(surfaces[activeIdx].key || surfaces[activeIdx].name).replace(/\s+/g, "_")}.png`);
+  downloadCanvas(c, `${(surfaces[activeIdx].key || surfaces[activeIdx].name).replace(/\s+/g, "_")}${exportSuffix()}.png`);
 }}, "exportPNG").name("Export PNG");
 
 gui.add({ exportZip() {
@@ -178,7 +185,7 @@ gui.add({ exportZip() {
     surfaces.forEach((s) => {
       const c = document.createElement("canvas");
       renderToCanvas(c, s);
-      jobs.push({ canvas: c, filename: `${(s.key || s.name).replace(/\s+/g, "_")}.png` });
+      jobs.push({ canvas: c, filename: `${(s.key || s.name).replace(/\s+/g, "_")}${exportSuffix()}.png` });
     });
 
     // Include CROSS (pixel map) if available
@@ -186,14 +193,14 @@ gui.add({ exportZip() {
     if (crossLayout && Object.keys(crossLayout.surfaces).length) {
       const c = document.createElement("canvas");
       renderPixelMap(c, crossLayout, { transparent: global.transparent });
-      jobs.push({ canvas: c, filename: "ALL.png" });
+      jobs.push({ canvas: c, filename: `ALL${exportSuffix()}.png` });
     }
 
     // Include PANORAMA if available
     if (panoramaLayout && Object.keys(panoramaLayout.surfaces).length) {
       const c = document.createElement("canvas");
       renderPixelMap(c, panoramaLayout, { transparent: global.transparent });
-      jobs.push({ canvas: c, filename: "PANORAMA.png" });
+      jobs.push({ canvas: c, filename: `PANORAMA${exportSuffix()}.png` });
     }
 
     let pending = jobs.length;
@@ -213,7 +220,7 @@ gui.add({ exportZip() {
             const url = URL.createObjectURL(content);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "testbild.zip";
+            a.download = `testbild${exportSuffix()}.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -243,7 +250,7 @@ uvActions.push(gui.add({ exportPixelMap() {
   if (!layout) return;
   const c = document.createElement("canvas");
   renderPixelMap(c, layout, { transparent: global.transparent });
-  downloadCanvas(c, "ALL.png");
+  downloadCanvas(c, `ALL${exportSuffix()}.png`);
 }}, "exportPixelMap").name("Export All UV Map"));
 
 uvActions.push(gui.add({ viewPanorama() {
@@ -256,7 +263,7 @@ uvActions.push(gui.add({ exportPanorama() {
   if (!panoramaLayout || !Object.keys(panoramaLayout.surfaces).length) return;
   const c = document.createElement("canvas");
   renderPixelMap(c, panoramaLayout, { transparent: global.transparent });
-  downloadCanvas(c, "PANORAMA.png");
+  downloadCanvas(c, `PANORAMA${exportSuffix()}.png`);
 }}, "exportPanorama").name("Export Panorama UV Map"));
 
 // Hide UV actions until JSON is loaded
