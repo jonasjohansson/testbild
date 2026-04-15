@@ -26,6 +26,8 @@ const global = {
   invert: false,
   transparent: false,
   credits: "\u00A9 Jonas Johansson",
+  outlineWidth: 20,
+  outlineFeather: 30,
 };
 
 const surface = {
@@ -91,6 +93,7 @@ function renderToCanvas(c, s, opts = {}) {
   if (patternKey === "grid") drawGrid(ctx, p);
   else if (patternKey === "solid") drawSolid(ctx, p);
   else if (patternKey === "smpte") drawSMPTE(ctx, p);
+  else if (patternKey === "outline") drawOutline(ctx, p);
 }
 
 function render() {
@@ -137,13 +140,15 @@ surfaceFolder.add(surface, "rows", 1, 100, 1).name("Rows").onChange(onSurfaceCha
 surfaceFolder.addColor(surface, "lineColor").name("Color").onChange(() => { saveSurface(); render(); });
 
 const globalFolder = gui.addFolder("Global");
-globalFolder.add(global, "pattern", ["Grid", "Solid", "SMPTE"]).name("Pattern").onChange(render);
+globalFolder.add(global, "pattern", ["Grid", "Solid", "SMPTE", "Outline"]).name("Pattern").onChange(render);
 globalFolder.add(global, "lineWidth", 0.5, 10, 0.5).name("Line Width").onChange(render);
 globalFolder.add(global, "cellSize", 0.3, 1.5, 0.05).name("Cell Size").onChange(render);
 globalFolder.add(global, "centerSize", 0.5, 3.0, 0.1).name("Center Size").onChange(render);
 globalFolder.add(global, "checkerOpacity", 0, 0.5, 0.01).name("Checker").onChange(render);
 globalFolder.add(global, "circles").name("Circles").onChange(render);
 globalFolder.add(global, "cross").name("Cross").onChange(render);
+globalFolder.add(global, "outlineWidth", 1, 100, 1).name("Outline Width").onChange(render);
+globalFolder.add(global, "outlineFeather", 0, 100, 1).name("Outline Feather").onChange(render);
 globalFolder.add(global, "invert").name("Invert").onChange(render);
 globalFolder.add(global, "transparent").name("Transparent BG").onChange(render);
 globalFolder.add(global, "credits").name("Credits").onFinishChange(render);
@@ -528,6 +533,36 @@ function drawSMPTE(ctx, p) {
     ctx.fillRect(i * w / 10, barH, w / 10, h - barH);
   }
   drawCenterText(ctx, w, h, 48 * p.centerSize, "#ffffff", "#000000", p);
+}
+
+function drawOutline(ctx, p) {
+  const { width: w, height: h, outlineWidth, outlineFeather, invert } = p;
+  const bg = invert ? "#ffffff" : "#000000";
+  const fg = invert ? "#000000" : "#ffffff";
+
+  // Draw on an offscreen canvas so we can apply blur
+  const tmp = document.createElement("canvas");
+  tmp.width = w;
+  tmp.height = h;
+  const tctx = tmp.getContext("2d");
+
+  // Draw the outline stroke as a rectangle border
+  tctx.strokeStyle = fg;
+  tctx.lineWidth = outlineWidth;
+  const half = outlineWidth / 2;
+  tctx.strokeRect(half, half, w - outlineWidth, h - outlineWidth);
+
+  // Composite: background + blurred outline
+  if (!p.transparent) {
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  if (outlineFeather > 0) {
+    ctx.filter = `blur(${outlineFeather}px)`;
+  }
+  ctx.drawImage(tmp, 0, 0);
+  ctx.filter = "none";
 }
 
 function drawCenterText(ctx, w, h, fontSize, textColor, bgColor, p) {
