@@ -331,13 +331,15 @@ function loadFromUVJSON(data) {
       };
     }
 
-    // Add to panorama layout (skip mirrors) — supports both old (ushape*) and new (panorama*) field names
+    // Add to panorama layout — skip surfaces that share a UV region with rotation
+    // (e.g. Right_ShortWallD has panoramaRotation=180, sharing Left_ShortWallC's region)
     const pUV = info.panoramaUV || info.ushapeUV;
     const pMirror = info.panoramaMirrorOf || info.ushapeMirrorOf;
-    if (pUV && !pMirror) {
+    const pRotation = info.panoramaRotation || info.ushapeRotation || 0;
+    if (pUV && !pMirror && pRotation === 0) {
       panoramaSurfaces[key] = {
         uv: pUV,
-        rotation: info.panoramaRotation || info.ushapeRotation || 0,
+        rotation: 0,
         cols: info.panoramaCols || info.ushapeCols,
         rows: info.panoramaRows || info.ushapeRows,
       };
