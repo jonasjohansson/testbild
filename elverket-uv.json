@@ -1,7 +1,7 @@
 {
   "name": "elverket",
-  "allTextureWidth": 11981,
-  "allTextureHeight": 6765,
+  "allTextureWidth": 12000,
+  "allTextureHeight": 6559,
   "panoramaTextureWidth": 10879,
   "panoramaTextureHeight": 4639,
   "surfaces": {
@@ -12,10 +12,10 @@
       "rows": 11,
       "color": "#00ff00",
       "allUV": {
-        "minU": 0.1595,
-        "maxU": 0.8406,
-        "minV": 0.2991,
-        "maxV": 0.701
+        "minU": 0.16,
+        "maxU": 0.84,
+        "minV": 0.2927,
+        "maxV": 0.7073
       },
       "rotation": 0,
       "panoramaUV": {
@@ -33,10 +33,10 @@
       "rows": 8,
       "color": "#ff0000",
       "allUV": {
-        "minU": 0.1594,
-        "maxU": 0.841,
+        "minU": 0.16,
+        "maxU": 0.84,
         "minV": 0.0,
-        "maxV": 0.2992
+        "maxV": 0.2927
       },
       "rotation": 180,
       "panoramaUV": {
@@ -56,9 +56,9 @@
       "color": "#00ffff",
       "allUV": {
         "minU": 0.0,
-        "maxU": 0.1595,
-        "minV": 0.2991,
-        "maxV": 0.7009
+        "maxU": 0.16,
+        "minV": 0.2927,
+        "maxV": 0.7073
       },
       "rotation": 270,
       "panoramaUV": {
@@ -76,9 +76,9 @@
       "rows": 8,
       "color": "#ffff00",
       "allUV": {
-        "minU": 0.1595,
-        "maxU": 0.8405,
-        "minV": 0.7008,
+        "minU": 0.16,
+        "maxU": 0.84,
+        "minV": 0.7073,
         "maxV": 1.0
       },
       "rotation": 0,
@@ -98,10 +98,10 @@
       "rows": 8,
       "color": "#ff00ff",
       "allUV": {
-        "minU": 0.8405,
+        "minU": 0.84,
         "maxU": 1.0,
-        "minV": 0.299,
-        "maxV": 0.7009
+        "minV": 0.2927,
+        "maxV": 0.7073
       },
       "rotation": 90,
       "panoramaUV": {
