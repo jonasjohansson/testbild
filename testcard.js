@@ -332,7 +332,7 @@ function loadFromUVJSON(data) {
     }
 
     // Add to panorama layout — skip surfaces that share a UV region with rotation
-    // (e.g. Right_ShortWallD has panoramaRotation=180, sharing Left_ShortWallC's region)
+    // (e.g. Left_ShortWallD has panoramaRotation=180, sharing Right_ShortWallC's region)
     const pUV = info.panoramaUV || info.ushapeUV;
     const pMirror = info.panoramaMirrorOf || info.ushapeMirrorOf;
     const pRotation = info.panoramaRotation || info.ushapeRotation || 0;

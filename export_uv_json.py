@@ -41,8 +41,8 @@ CELL_SIZE = 1.0
 SURFACE_SPECS = {
     "Front_LongWallA":  {"w": 8160, "h": 1920},   # Long Wall A — 34.00m × 8m
     "Rear_LongWallB":   {"w": 8160, "h": 1920},   # Long Wall B — 34.00m × 8m
-    "Left_ShortWallC":  {"w": 2719, "h": 1920},   # Short Wall C — 11.32m × 8m
-    "Right_ShortWallD": {"w": 2719, "h": 1920},   # Short Wall D — 11.32m × 8m
+    "Right_ShortWallC": {"w": 2719, "h": 1920},   # Short Wall C — 11.32m × 8m
+    "Left_ShortWallD":  {"w": 2719, "h": 1920},   # Short Wall D — 11.32m × 8m
     "Floor":            {"w": 8160, "h": 2719},   # Floor — ~34.00m × ~11.33m
 }
 

@@ -48,7 +48,7 @@
       "panoramaRotation": 0,
       "panoramaCols": 17
     },
-    "Left_ShortWallC": {
+    "Right_ShortWallC": {
       "w": 2719,
       "h": 1920,
       "cols": 11,
@@ -91,7 +91,7 @@
       "panoramaRotation": 0,
       "panoramaCols": 17
     },
-    "Right_ShortWallD": {
+    "Left_ShortWallD": {
       "w": 2719,
       "h": 1920,
       "cols": 11,
